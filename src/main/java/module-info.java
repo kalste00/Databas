@@ -1,8 +1,9 @@
 module se.kth.databas.databas {
+    requires java.sql;
+
     requires javafx.controls;
-    requires javafx.fxml;
+    requires javafx.base;
 
-
-    opens se.kth.databas to javafx.fxml;
+    opens se.kth.databas to javafx.base; // open model package for reflection from PropertyValuesFactory (sigh ...)
     exports se.kth.databas;
 }
