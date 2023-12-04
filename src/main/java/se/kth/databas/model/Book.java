@@ -1,6 +1,8 @@
 package se.kth.databas.model;
 
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Representation of a book.
@@ -14,7 +16,8 @@ public class Book {
     private String title;
     private Date published;
     private String storyLine = "";
-    // TODO: 
+    private List<Author> authors = new ArrayList<>();
+    // TODO:
     // Add authors, as a separate class(!), and corresponding methods, to your implementation
     // as well, i.e. "private ArrayList<Author> authors;"
     
