@@ -52,6 +52,34 @@ public class BooksDbMockImpl implements BooksDbInterface {
         }
         return result;
     }
+    @Override
+    public List<Book> searchBooksByISBN(String searchISBN) throws BooksDbException {
+        List<Book> result = new ArrayList<>();
+        searchISBN = searchISBN.toLowerCase();
+        for (Book book : books) {
+            if (book.getIsbn().toLowerCase().contains(searchISBN)) {
+                result.add(book);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public List<Book> searchBooksByAuthor(String searchAuthor) throws BooksDbException {
+        List<Book> result = new ArrayList<>();
+        searchAuthor = searchAuthor.toLowerCase();
+        for (Book book : books) {
+            for (Author author : book.getAuthors()) {
+                if (author.getFirstName().toLowerCase().contains(searchAuthor)
+                        || author.getLastName().toLowerCase().contains(searchAuthor)) {
+                    result.add(book);
+                    break;  // Once a match is found for an author, no need to check further
+                }
+            }
+        }
+        return result;
+    }
+
 
     private static final Book[] DATA = {
             new Book(1, "123456789", "Databases Illuminated", new Date(2018, 1, 1)),

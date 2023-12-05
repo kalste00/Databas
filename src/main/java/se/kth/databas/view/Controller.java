@@ -34,10 +34,10 @@ public class Controller {
                         result = booksDb.searchBooksByTitle(searchFor);
                         break;
                     case ISBN:
-                        // ...
+                        result = booksDb.searchBooksByISBN(searchFor);
                         break;
                     case Author:
-                        // ...
+                        result = booksDb.searchBooksByAuthor(searchFor);
                         break;
                     default:
                         result= new ArrayList<>();
