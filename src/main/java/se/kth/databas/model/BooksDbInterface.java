@@ -31,6 +31,8 @@ public interface BooksDbInterface {
 
     List<Book> searchBooksByAuthor(String author) throws BooksDbException;
 
+    List<Book> getAllBooks();
+
 
     // TODO: Add abstract methods for all inserts, deletes and queries 
     // mentioned in the instructions for the assignement.
