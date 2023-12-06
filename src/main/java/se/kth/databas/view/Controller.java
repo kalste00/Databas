@@ -40,22 +40,22 @@ public class Controller {
                         result = booksDb.searchBooksByAuthor(searchFor);
                         break;
                     default:
-                        result= new ArrayList<>();
+                        result = new ArrayList<>();
                 }
                 if (result == null || result.isEmpty()) {
-                    booksView.showAlertAndWait(
-                            "No results found.", INFORMATION);
+                    booksView.showAlertAndWait("No results found.", INFORMATION);
                 } else {
                     booksView.displayBooks(result);
                 }
             } else {
-                booksView.showAlertAndWait(
-                        "Enter a search string!", WARNING);
+                booksView.showAlertAndWait("Enter a search string!", WARNING);
             }
         } catch (Exception e) {
-            booksView.showAlertAndWait("Database error.",ERROR);
+            e.printStackTrace(); // Add proper logging or print statements for debugging
+            booksView.showAlertAndWait("Database error.", ERROR);
         }
     }
+
 
     public void deleteItem(Book itemToDelete) {
         try {
