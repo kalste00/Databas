@@ -4,6 +4,8 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import se.kth.databas.model.BooksDbInterface;
+import se.kth.databas.model.BooksDbException;
 import se.kth.databas.model.BooksDbMockImpl;
 import se.kth.databas.view.BooksPane;
 
@@ -16,25 +18,30 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        try {
+            BooksDbMockImpl booksDb = new BooksDbMockImpl();
+            if (booksDb.connect("DatabaseName")) {
+                BooksPane root = new BooksPane(booksDb);
+                Scene scene = new Scene(root, 800, 600);
 
-        BooksDbMockImpl booksDb = new BooksDbMockImpl(); // model
-        // Don't forget to connect to the db, somewhere...
+                primaryStage.setTitle("Books Database Client");
+                primaryStage.setOnCloseRequest(event -> {
+                    try {
+                        booksDb.disconnect();
+                    } catch (BooksDbException e) {
+                        e.printStackTrace();
+                    }
+                });
 
-        BooksPane root = new BooksPane(booksDb);
-
-        Scene scene = new Scene(root, 800, 600);
-
-        primaryStage.setTitle("Books Database Client");
-        // add an exit handler to the stage (X) ?
-        primaryStage.setOnCloseRequest(event -> {
-            try {
-                booksDb.disconnect();
-            } catch (Exception e) {}
-        });
-        primaryStage.setScene(scene);
-        primaryStage.show();
+                primaryStage.setScene(scene);
+                primaryStage.show();
+            } else {
+                System.out.println("Failed to connect to the database.");
+            }
+        } catch (BooksDbException e) {
+            e.printStackTrace();
+        }
     }
-
     public static void main(String[] args) {
         launch(args);
     }
