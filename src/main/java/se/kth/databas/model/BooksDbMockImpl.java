@@ -87,8 +87,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
         searchAuthor = searchAuthor.toLowerCase();
         for (Book book : books) {
             for (Author author : book.getAuthors()) {
-                if (author.getFirstName().toLowerCase().contains(searchAuthor)
-                        || author.getLastName().toLowerCase().contains(searchAuthor)) {
+                if (author.getName().toLowerCase().contains(searchAuthor)) {
                     result.add(book);
                     break;  // Once a match is found for an author, no need to check further
                 }
