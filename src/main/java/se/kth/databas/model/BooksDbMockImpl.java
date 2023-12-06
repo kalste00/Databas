@@ -55,11 +55,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
     }
 
     @Override
-    public List<Book> searchBooksByTitle(String searchTitle)
-            throws BooksDbException {
-        // mock implementation
-        // NB! Your implementation should select the books matching
-        // the search string via a query to a database (not load all books from db)
+    public List<Book> searchBooksByTitle(String searchTitle) throws BooksDbException {
         List<Book> result = new ArrayList<>();
         searchTitle = searchTitle.toLowerCase();
         for (Book book : books) {
