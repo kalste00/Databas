@@ -2,7 +2,9 @@ package se.kth.databas.view;
 
 import java.sql.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -14,6 +16,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import se.kth.databas.model.Author;
 import se.kth.databas.model.Book;
 import se.kth.databas.model.BooksDbMockImpl;
 import se.kth.databas.model.SearchMode;
@@ -91,26 +94,37 @@ public class BooksPane extends VBox {
 
     private void initBooksTable() {
         booksTable = new TableView<>();
-        booksTable.setEditable(false); // don't allow user updates (yet)
+        booksTable.setEditable(false);
         booksTable.setPlaceholder(new Label("No rows to display"));
 
-        // define columns
+        // Define columns
         TableColumn<Book, String> titleCol = new TableColumn<>("Title");
         TableColumn<Book, String> isbnCol = new TableColumn<>("ISBN");
+        TableColumn<Book, String> authorsCol = new TableColumn<>("Authors"); // New column for authors
         TableColumn<Book, Date> publishedCol = new TableColumn<>("Published");
-        booksTable.getColumns().addAll(titleCol, isbnCol, publishedCol);
-        // give title column some extra space
-        titleCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.5));
 
-        // define how to fill data for each cell, 
-        // get values from Book properties
+        // Add columns to the table
+        booksTable.getColumns().addAll(titleCol, isbnCol, authorsCol, publishedCol);
+
+        // Set column widths
+        titleCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.35));
+        isbnCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.15));
+        authorsCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.35));
+        publishedCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.15));
+
+        // Set cell value factories
         titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
         isbnCol.setCellValueFactory(new PropertyValueFactory<>("isbn"));
+        authorsCol.setCellValueFactory(cellData -> {
+            List<Author> authors = cellData.getValue().getAuthors();
+            return new SimpleStringProperty(authors.stream().map(Author::getName).collect(Collectors.joining(", ")));
+        });
         publishedCol.setCellValueFactory(new PropertyValueFactory<>("published"));
-        
-        // associate the table view with the data
+
+        // Set the items in the table
         booksTable.setItems(booksInTable);
     }
+
 
     private void initSearchView(Controller controller) {
         searchField = new TextField();
