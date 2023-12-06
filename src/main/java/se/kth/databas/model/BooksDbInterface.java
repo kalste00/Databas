@@ -27,7 +27,11 @@ public interface BooksDbInterface {
     public void disconnect() throws BooksDbException;
     
     public List<Book> searchBooksByTitle(String title) throws BooksDbException;
-    
+    List<Book> searchBooksByISBN(String isbn) throws BooksDbException;
+
+    List<Book> searchBooksByAuthor(String author) throws BooksDbException;
+
+
     // TODO: Add abstract methods for all inserts, deletes and queries 
     // mentioned in the instructions for the assignement.
 }
