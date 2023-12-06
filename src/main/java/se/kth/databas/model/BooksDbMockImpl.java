@@ -32,7 +32,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
     @Override
     public boolean connect(String database) throws BooksDbException {
         try {
-            String connectionString = "jdbc:mysql://localhost:3306/" + database + "?user=root" + "&password=Pulkan1337@@";
+            String connectionString = "jdbc:mysql://localhost:3306/" + database + "?user=root" + "&password=YourPassword";
             connection = DriverManager.getConnection(connectionString);
             System.out.println("Connected to the database");
             return true;

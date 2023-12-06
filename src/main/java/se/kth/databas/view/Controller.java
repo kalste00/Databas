@@ -62,7 +62,7 @@ public class Controller {
         // Anropa anslutningsmetoden i BooksDbInterface
         boolean connected = false;
         try {
-            connected = booksDb.connect("kcdb");
+            connected = booksDb.connect("DatabaseName");
         } catch (BooksDbException e) {
             throw new RuntimeException(e);
         }
