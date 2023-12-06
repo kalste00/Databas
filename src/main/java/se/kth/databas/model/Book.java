@@ -9,7 +9,7 @@ import java.util.List;
  * 
  * @author anderslm@kth.se
  */
-public class Book {
+public class    Book {
     
     private int bookId;
     private String isbn; // should check format

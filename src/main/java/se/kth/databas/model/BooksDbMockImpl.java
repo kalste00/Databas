@@ -11,6 +11,7 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A mock implementation of the BooksDBInterface interface to demonstrate how to
@@ -24,10 +25,18 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     private final List<Book> books;
     private Connection connection;
+    private final List<Author> allAuthors = Arrays.asList(AUTHOR_DATA);
+
 
     public BooksDbMockImpl() {
         books = Arrays.asList(DATA);
     }
+
+    private static final Author[] AUTHOR_DATA = {
+            new Author("Author1"),
+            new Author("Author2"),
+            // Add more authors as needed
+    };
 
     @Override
     public boolean connect(String database) throws BooksDbException {
@@ -76,6 +85,19 @@ public class BooksDbMockImpl implements BooksDbInterface {
         }
         return result;
     }
+
+    public List<Author> searchAuthorsByName(String searchName) throws BooksDbException {
+        List<Author> result = new ArrayList<>();
+        searchName = searchName.toLowerCase();
+        for (Author author : allAuthors) {
+            if (author.getName().toLowerCase().contains(searchName)) {
+                result.add(author);
+            }
+        }
+        return result;
+    }
+
+
 
     @Override
     public List<Book> searchBooksByAuthor(String searchAuthor) throws BooksDbException {
