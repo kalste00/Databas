@@ -2,34 +2,27 @@ package se.kth.databas.model;
 
 public class Author {
     private int authorId;
-    private String firstName;
-    private String lastName;
+    private String name;
 
-    public Author(int authorId, String firstName, String lastName) {
+    public Author(int authorId, String name) {
         this.authorId = authorId;
-        this.firstName = firstName;
-        this.lastName = lastName;
+        this.name = name;
     }
 
-    public Author(String firstName, String lastName){
-        this(-1, firstName, lastName);
+    public Author(String name){
+        this(-1, name);
     }
 
     public int getAuthorId(){
         return authorId;
     }
 
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
+    public String getName() {
+        return name;
     }
 
     @Override
     public String toString() {
-        return firstName + " " + lastName;
+        return name;
     }
 }
-

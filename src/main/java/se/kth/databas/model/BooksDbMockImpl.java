@@ -5,6 +5,8 @@
  */
 package se.kth.databas.model;
 
+
+import java.sql.*;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,6 +23,7 @@ import java.util.List;
 public class BooksDbMockImpl implements BooksDbInterface {
 
     private final List<Book> books;
+    private Connection connection;
 
     public BooksDbMockImpl() {
         books = Arrays.asList(DATA);
@@ -28,13 +31,27 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     @Override
     public boolean connect(String database) throws BooksDbException {
-        // mock implementation
-        return true;
+        try {
+            String connectionString = "jdbc:mysql://localhost:3306/" + database + "?user=root" + "&password=Pulkan1337@@";
+            connection = DriverManager.getConnection(connectionString);
+            System.out.println("Connected to the database");
+            return true;
+        } catch (SQLException e) {
+            throw new BooksDbException("Failed to connect to the database", e);
+        }
     }
+
 
     @Override
     public void disconnect() throws BooksDbException {
-        // mock implementation
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+                System.out.println("Disconnected from the database");
+            }
+        } catch (SQLException e) {
+            throw new BooksDbException("Failed to disconnect from the database", e);
+        }
     }
 
     @Override

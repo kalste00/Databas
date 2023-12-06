@@ -1,6 +1,7 @@
 package se.kth.databas.view;
 
 import se.kth.databas.model.Book;
+import se.kth.databas.model.BooksDbException;
 import se.kth.databas.model.BooksDbInterface;
 import se.kth.databas.model.SearchMode;
 
@@ -54,6 +55,21 @@ public class Controller {
             }
         } catch (Exception e) {
             booksView.showAlertAndWait("Database error.",ERROR);
+        }
+    }
+
+    protected void onConnectToDb() {
+        // Anropa anslutningsmetoden i BooksDbInterface
+        boolean connected = false;
+        try {
+            connected = booksDb.connect("kcdb");
+        } catch (BooksDbException e) {
+            throw new RuntimeException(e);
+        }
+        if (connected) {
+            booksView.showAlertAndWait("Connected to the database.", INFORMATION);
+        } else {
+            booksView.showAlertAndWait("Failed to connect to the database.", WARNING);
         }
     }
 
