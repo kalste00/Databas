@@ -50,8 +50,10 @@ public class BooksPane extends VBox {
     public void displayBooks(List<Book> books) {
         booksInTable.clear();
         booksInTable.addAll(books);
+        booksTable.refresh(); // Add this line to refresh the TableView
     }
-    
+
+
     /**
      * Notify user on input error or exceptions.
      * 
