@@ -32,7 +32,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
     @Override
     public boolean connect(String database) throws BooksDbException {
         try {
-            String connectionString = "jdbc:mysql://localhost:3306/" + database + "?user=root" + "&password=YourPassword";
+            String connectionString = "jdbc:mysql://localhost:3306/" + database + "?user=root" + "&password=Gaming123";
             connection = DriverManager.getConnection(connectionString);
             System.out.println("Connected to the database");
             return true;
@@ -94,6 +94,46 @@ public class BooksDbMockImpl implements BooksDbInterface {
             }
         }
         return result;
+    }
+
+    @Override
+    public List<Book> getAllBooks() {
+        return null;
+    }
+
+    @Override
+    public void addBook(Book book) throws BooksDbException {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO books (isbn, title, published) VALUES (?, ?, ?)")) {
+            statement.setString(1, book.getIsbn());
+            statement.setString(2, book.getTitle());
+            statement.setDate(3, book.getPublished());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BooksDbException("Error adding book: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void updateBook(Book book) throws BooksDbException {
+        try (PreparedStatement statement = connection.prepareStatement("UPDATE books SET title = ?, isbn = ?, published = ? WHERE bookId = ?")) {
+            statement.setString(1, book.getTitle());
+            statement.setString(2, book.getIsbn());
+            statement.setDate(3, book.getPublished());
+            statement.setInt(4, book.getBookId());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BooksDbException("Error updating book: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void deleteBook(Book book) throws BooksDbException {
+        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM books WHERE bookId = ?")) {
+            statement.setInt(1, book.getBookId());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new BooksDbException("Error deleting book: " + e.getMessage(), e);
+        }
     }
 
 

@@ -20,7 +20,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         try {
             BooksDbMockImpl booksDb = new BooksDbMockImpl();
-            if (booksDb.connect("DatabaseName")) {
+            if (booksDb.connect("kcdb2")) {
                 BooksPane root = new BooksPane(booksDb);
                 Scene scene = new Scene(root, 800, 600);
 

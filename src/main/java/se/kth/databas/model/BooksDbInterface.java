@@ -33,6 +33,12 @@ public interface BooksDbInterface {
 
     List<Book> getAllBooks();
 
+    void addBook(Book newItem) throws BooksDbException;
+
+    void updateBook(Book updatedItem) throws BooksDbException;
+
+    void deleteBook(Book itemToDelete) throws BooksDbException;
+
 
     // TODO: Add abstract methods for all inserts, deletes and queries 
     // mentioned in the instructions for the assignement.
