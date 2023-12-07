@@ -1,13 +1,14 @@
 package se.kth.databas.view;
 
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.util.Callback;
+import se.kth.databas.model.Book;
+import se.kth.databas.model.Genre;
+
+import java.sql.Date;
+import java.time.LocalDate;
+import java.util.Optional;
 
 public class Dialogs {
 
@@ -36,6 +37,62 @@ public class Dialogs {
             }
         });
     }
+
+    public static Optional<Book> showAddDialog() {
+        Dialog<Book> dialog = new Dialog<>();
+        dialog.setTitle("Add Book");
+        dialog.setHeaderText("Enter book details:");
+
+        // Set the button types
+        ButtonType addButton = new ButtonType("Add", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(addButton, ButtonType.CANCEL);
+
+        // Create and configure the title, isbn, publishDate, rating, and genre fields.
+        TextField titleField = new TextField();
+        TextField isbnField = new TextField();
+        DatePicker publishedDateField = new DatePicker();
+        TextField ratingField = new TextField();
+
+        // Use ChoiceBox for genre
+        ChoiceBox<Genre> genreChoiceBox = new ChoiceBox<>();
+        genreChoiceBox.getItems().addAll(Genre.values());
+
+        GridPane grid = new GridPane();
+        grid.add(new Label("Title:"), 0, 0);
+        grid.add(titleField, 1, 0);
+        grid.add(new Label("ISBN:"), 0, 1);
+        grid.add(isbnField, 1, 1);
+        grid.add(new Label("Published Date:"), 0, 2);
+        grid.add(publishedDateField, 1, 2);
+        grid.add(new Label("Rating:"), 0, 3);
+        grid.add(ratingField, 1, 3);
+        grid.add(new Label("Genre:"), 0, 4);
+        grid.add(genreChoiceBox, 1, 4);
+
+        dialog.getDialogPane().setContent(grid);
+
+        // Convert the result to a Book object when the add button is clicked
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == addButton) {
+                try {
+                    String title = titleField.getText();
+                    String isbn = isbnField.getText();
+                    LocalDate publishedDate = publishedDateField.getValue();
+                    int rating = Integer.parseInt(ratingField.getText());
+                    Genre selectedGenre = genreChoiceBox.getValue();
+
+                    // Create a Book object using the appropriate constructor
+                    return new Book(title, isbn, Date.valueOf(publishedDate), selectedGenre, rating);
+                } catch (NumberFormatException e) {
+                    showAlert("Invalid rating. Please enter a valid integer.", Alert.AlertType.ERROR);
+                }
+            }
+            return null;
+        });
+
+        return dialog.showAndWait();
+    }
+
 
     private static boolean isValidRating(String rating) {
         try {

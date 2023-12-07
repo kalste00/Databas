@@ -75,11 +75,14 @@ public class BooksDbMockImpl implements BooksDbInterface {
                         String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
                         Date publishDate = rs.getDate("publishDate");
+                        int rating = rs.getInt("rating");
+                        Genre genre = Genre.valueOf(rs.getString("genre"));
+
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, isbn, title, publishDate);
+                        Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -104,11 +107,13 @@ public class BooksDbMockImpl implements BooksDbInterface {
                         String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
                         Date publishDate = rs.getDate("publishDate");
+                        int rating = rs.getInt("rating");
+                        Genre genre = Genre.valueOf(rs.getString("genre"));
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, isbn, title, publishDate);
+                        Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -185,11 +190,13 @@ public class BooksDbMockImpl implements BooksDbInterface {
                         String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
                         Date publishDate = rs.getDate("publishDate");
+                        int rating = rs.getInt("rating");
+                        Genre genre = Genre.valueOf(rs.getString("genre"));
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, isbn, title, publishDate);
+                        Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -213,7 +220,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
         try (PreparedStatement statement = connection.prepareStatement("INSERT INTO Book (ISBN, title, publishDate) VALUES (?, ?, ?)")) {
             statement.setString(1, book.getIsbn());
             statement.setString(2, book.getTitle());
-            statement.setDate(3, book.getPublished());
+            statement.setDate(3, book.getPublishDate());
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new BooksDbException("Error adding book: " + e.getMessage(), e);
@@ -225,7 +232,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
         try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, ISBN = ?, publishDate = ? WHERE bookId = ?")) {
             statement.setString(1, book.getTitle());
             statement.setString(2, book.getIsbn());
-            statement.setDate(3, book.getPublished());
+            statement.setDate(3, book.getPublishDate());
             statement.setInt(4, book.getBookId());
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -244,14 +251,14 @@ public class BooksDbMockImpl implements BooksDbInterface {
     }
 
     private static final Book[] DATA = {
-            new Book(1, "123456789", "Databases Illuminated", new Date(2018, 1, 1)),
-            new Book(2, "234567891", "Dark Databases", new Date(1990, 1, 1)),
-            new Book(3, "456789012", "The buried giant", new Date(2000, 1, 1)),
-            new Book(4, "567890123", "Never let me go", new Date(2000, 1, 1)),
-            new Book(5, "678901234", "The remains of the day", new Date(2000, 1, 1)),
-            new Book(6, "234567890", "Alias Grace", new Date(2000, 1, 1)),
-            new Book(7, "345678911", "The handmaids tale", new Date(2010, 1, 1)),
-            new Book(8, "345678901", "Shuggie Bain", new Date(2020, 1, 1)),
-            new Book(9, "345678912", "Microserfs", new Date(2000, 1, 1)),
+            new Book(1, "123456789", "Databases Illuminated", new Date(2018, 1, 1),Genre.Literature,5),
+            new Book(2, "234567891", "Dark Databases", new Date(1990, 1, 1),Genre.Literature,5),
+            new Book(3, "456789012", "The buried giant", new Date(2000, 1, 1),Genre.Romance,3),
+            new Book(4, "567890123", "Never let me go", new Date(2000, 1, 1),Genre.ScienceFiction,4),
+            new Book(5, "678901234", "The remains of the day", new Date(2000, 1, 1),Genre.ScienceFiction,3),
+            new Book(6, "234567890", "Alias Grace", new Date(2000, 1, 1),Genre.Action,2),
+            new Book(7, "345678911", "The handmaids tale", new Date(2010, 1, 1),Genre.Adventure,4),
+            new Book(8, "345678901", "Shuggie Bain", new Date(2020, 1, 1),Genre.Fantasy,3),
+            new Book(9, "345678912", "Microserfs", new Date(2000, 1, 1),Genre.Drama,3),
     };
 }
