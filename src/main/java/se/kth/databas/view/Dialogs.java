@@ -93,7 +93,6 @@ public class Dialogs {
         return dialog.showAndWait();
     }
 
-
     private static boolean isValidRating(String rating) {
         try {
             int value = Integer.parseInt(rating);

@@ -174,6 +174,14 @@ public class BooksPane extends VBox{
         Menu manageMenu = new Menu("Manage");
         MenuItem addItem = new MenuItem("Add");
         MenuItem removeItem = new MenuItem("Remove");
+        removeItem.setOnAction(event -> {
+            Book selectedBook = booksTable.getSelectionModel().getSelectedItem();
+            if (selectedBook != null) {
+                controller.deleteBooks(selectedBook);
+            } else {
+                showAlertAndWait("Select a book to remove.", WARNING);
+            }
+        });
         MenuItem updateItem = new MenuItem("Update");
         MenuItem rateItem = new MenuItem("Rate");
         rateItem.setOnAction(event -> {

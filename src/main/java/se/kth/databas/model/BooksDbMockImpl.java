@@ -179,8 +179,8 @@ public class BooksDbMockImpl implements BooksDbInterface {
         searchAuthor = searchAuthor.toLowerCase();
 
         try {
-            String sql = "SELECT b.* FROM Book b JOIN Book_Author ba ON bookId = bookId "
-                    + "JOIN Author a ON authorId = authorId WHERE name LIKE ?";
+            String sql = "SELECT b.* FROM Book b JOIN Book_Author ba ON b.bookId = ba.bookId "
+                    + "JOIN Author a ON a.authorId = ba.authorId WHERE a.name LIKE ?";
             try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
                 pstmt.setString(1, "%" + searchAuthor + "%");
 
@@ -211,9 +211,37 @@ public class BooksDbMockImpl implements BooksDbInterface {
     }
 
     @Override
-    public List<Book> getAllBooks() {
-        return null;
+    public List<Book> getAllBooks() throws BooksDbException {
+        List<Book> result = new ArrayList<>();
+        try {
+            String sql = "SELECT * FROM Book";
+            try (Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+                while (rs.next()) {
+                    int bookId = rs.getInt("bookId");
+                    String isbn = rs.getString("ISBN");
+                    String title = rs.getString("title");
+                    Date publishDate = rs.getDate("publishDate");
+                    int rating = rs.getInt("rating");
+                    String genreStr = rs.getString("genre");
+
+                    // Fetch authors associated with the book
+                    List<Author> bookAuthors = getAuthorsForBook(bookId);
+
+                    // Convert genre string to Genre enum
+                    Genre genre = Genre.valueOf(genreStr);
+
+                    Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
+                    book.getAuthors().addAll(bookAuthors);
+
+                    result.add(book);
+                }
+            }
+        } catch (SQLException e) {
+            throw new BooksDbException("Error getting all books", e);
+        }
+        return result;
     }
+
 
     @Override
     public void addBook(Book book) throws BooksDbException {
