@@ -31,7 +31,7 @@ public interface BooksDbInterface {
 
     List<Book> searchBooksByAuthor(String author) throws BooksDbException;
 
-    List<Book> getAllBooks();
+    List<Book> getAllBooks() throws BooksDbException;
 
     void addBook(Book newItem) throws BooksDbException;
 
