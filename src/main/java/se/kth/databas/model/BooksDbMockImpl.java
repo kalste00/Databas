@@ -41,7 +41,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
     @Override
     public boolean connect(String database) throws BooksDbException {
         try {
-            String connectionString = "jdbc:mysql://localhost:3306/" + database + "?user=root" + "&password=Gaming123";
+            String connectionString = "jdbc:mysql://localhost:3306/" + database + "?user=root" + "&password=Pulkan1337@@";
             connection = DriverManager.getConnection(connectionString);
             System.out.println("Connected to the database");
             return true;
@@ -84,12 +84,12 @@ public class BooksDbMockImpl implements BooksDbInterface {
                         int bookId = rs.getInt("bookId");
                         String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
-                        Date published = rs.getDate("published");
+                        Date publishDate = rs.getDate("publishDate");
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(isbn, title, published, bookId);
+                        Book book = new Book(bookId, isbn, title, publishDate);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -102,6 +102,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
         return result;
     }
+
 
     // A method to retrieve authors for a given book
     private List<Author> getAuthorsForBook(int bookId) throws SQLException {
@@ -193,14 +194,14 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
 
     private static final Book[] DATA = {
-            new Book(1, "123456789", "Databases Illuminated", new Date(2018, 1, 1),2),
-            new Book(2, "234567891", "Dark Databases", new Date(1990, 1, 1),1),
-            new Book(3, "456789012", "The buried giant", new Date(2000, 1, 1),2),
-            new Book(4, "567890123", "Never let me go", new Date(2000, 1, 1),3),
-            new Book(5, "678901234", "The remains of the day", new Date(2000, 1, 1),2),
-            new Book(6, "234567890", "Alias Grace", new Date(2000, 1, 1),3),
-            new Book(7, "345678911", "The handmaids tale", new Date(2010, 1, 1),3),
-            new Book(8, "345678901", "Shuggie Bain", new Date(2020, 1, 1),2),
-            new Book(9, "345678912", "Microserfs", new Date(2000, 1, 1),4),
+            new Book(1, "123456789", "Databases Illuminated", new Date(118, 1, 1)),
+            new Book(2, "234567891", "Dark Databases", new Date(1990, 1, 1)),
+            new Book(3, "456789012", "The buried giant", new Date(2000, 1, 1)),
+            new Book(4, "567890123", "Never let me go", new Date(2000, 1, 1)),
+            new Book(5, "678901234", "The remains of the day", new Date(2000, 1, 1)),
+            new Book(6, "234567890", "Alias Grace", new Date(2000, 1, 1)),
+            new Book(7, "345678911", "The handmaids tale", new Date(2010, 1, 1)),
+            new Book(8, "345678901", "Shuggie Bain", new Date(2020, 1, 1)),
+            new Book(9, "345678912", "Microserfs", new Date(2000, 1, 1)),
     };
 }

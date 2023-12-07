@@ -16,6 +16,7 @@ public class Book {
     private String title;
     private Date published;
     private int rating;
+    private Genre genre;
     private String storyLine = "";
     private ArrayList<Author> authors = new ArrayList<>();
 
@@ -59,6 +60,6 @@ public class Book {
 
     @Override
     public String toString() {
-        return title + ", " + isbn + ", " + published.toString();
+        return title + ", " + isbn + ", " + published.toString() + ", " + authors + ", " + genre + ", " + rating;
     }
 }

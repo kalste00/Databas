@@ -69,7 +69,7 @@ public class BooksPane extends VBox{
 
     /**
      * Notify user on input error or exceptions.
-     * 
+     *
      * @param msg the message
      * @param type types: INFORMATION, WARNING et c.
      */
@@ -110,20 +110,20 @@ public class BooksPane extends VBox{
         // define columns
         TableColumn<Book, String> titleCol = new TableColumn<>("Title");
         TableColumn<Book, String> isbnCol = new TableColumn<>("ISBN");
-        TableColumn<Book, Date> publishedCol = new TableColumn<>("Published");
+        TableColumn<Book, Date> publishDateCol = new TableColumn<>("Published");
         TableColumn<Book, String> authorCol = new TableColumn<>("Author/s");
         TableColumn<Book, String> genreCol = new TableColumn<>("Genre/s");
         TableColumn<Book, String> ratingCol = new TableColumn<>("Rating");
-        booksTable.getColumns().addAll(titleCol, isbnCol, publishedCol, authorCol, genreCol, ratingCol);
+        booksTable.getColumns().addAll(titleCol, isbnCol, publishDateCol, authorCol, genreCol, ratingCol);
         // give title column some extra space
         titleCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.5));
 
-        // define how to fill data for each cell, 
+        // define how to fill data for each cell,
         // get values from Book properties
         titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
         isbnCol.setCellValueFactory(new PropertyValueFactory<>("isbn"));
-        publishedCol.setCellValueFactory(new PropertyValueFactory<>("published"));
-        
+        publishDateCol.setCellValueFactory(new PropertyValueFactory<>("published"));
+
         // associate the table view with the data
         booksTable.setItems(booksInTable);
     }
