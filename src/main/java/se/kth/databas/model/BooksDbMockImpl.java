@@ -41,7 +41,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
     @Override
     public boolean connect(String database) throws BooksDbException {
         try {
-            String connectionString = "jdbc:mysql://localhost:3306/" + database + "?user=root" + "&password=Pulkan1337@@";
+            String connectionString = "jdbc:mysql://localhost:3306/" + database + "?user=root" + "&password=Gaming123";
             connection = DriverManager.getConnection(connectionString);
             System.out.println("Connected to the database");
             return true;
@@ -65,10 +65,29 @@ public class BooksDbMockImpl implements BooksDbInterface {
     public List<Book> searchBooksByTitle(String searchTitle) throws BooksDbException {
         List<Book> result = new ArrayList<>();
         searchTitle = searchTitle.toLowerCase();
-        for (Book book : books) {
-            if (book.getTitle().toLowerCase().contains(searchTitle)) {
-                result.add(book);
+        try {
+            String sql = "SELECT * FROM Book WHERE title LIKE ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, "%" + searchTitle + "%");
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        int bookId = rs.getInt("bookId");
+                        String isbn = rs.getString("ISBN");
+                        String title = rs.getString("title");
+                        Date publishDate = rs.getDate("publishDate");
+
+                        // Fetch authors associated with the book
+                        List<Author> bookAuthors = getAuthorsForBook(bookId);
+
+                        Book book = new Book(bookId, isbn, title, publishDate);
+                        book.getAuthors().addAll(bookAuthors);
+
+                        result.add(book);
+                    }
+                }
             }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
         return result;
     }
@@ -127,28 +146,60 @@ public class BooksDbMockImpl implements BooksDbInterface {
     public List<Author> searchAuthorsByName(String searchName) throws BooksDbException {
         List<Author> result = new ArrayList<>();
         searchName = searchName.toLowerCase();
-        for (Author author : allAuthors) {
-            if (author.getName().toLowerCase().contains(searchName)) {
-                result.add(author);
+
+        try {
+            String sql = "SELECT * FROM Author WHERE name LIKE ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, "%" + searchName + "%");
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        int authorId = rs.getInt("authorId");
+                        String authorName = rs.getString("name");
+                        Author author = new Author(authorId, authorName);
+                        result.add(author);
+                    }
+                }
             }
+        } catch (SQLException e) {
+            throw new BooksDbException("Error searching authors by name", e);
         }
+
         return result;
     }
-
-
 
     @Override
     public List<Book> searchBooksByAuthor(String searchAuthor) throws BooksDbException {
         List<Book> result = new ArrayList<>();
         searchAuthor = searchAuthor.toLowerCase();
-        for (Book book : books) {
-            for (Author author : book.getAuthors()) {
-                if (author.getName().toLowerCase().contains(searchAuthor)) {
-                    result.add(book);
-                    break;  // Once a match is found for an author, no need to check further
+
+        try {
+            String sql = "SELECT b.* FROM Book b JOIN Book_Author ba ON bookId = bookId "
+                    + "JOIN Author a ON authorId = authorId WHERE name LIKE ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, "%" + searchAuthor + "%");
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        int bookId = rs.getInt("bookId");
+                        String isbn = rs.getString("ISBN");
+                        String title = rs.getString("title");
+                        Date publishDate = rs.getDate("publishDate");
+
+                        // Fetch authors associated with the book
+                        List<Author> bookAuthors = getAuthorsForBook(bookId);
+
+                        Book book = new Book(bookId, isbn, title, publishDate);
+                        book.getAuthors().addAll(bookAuthors);
+
+                        result.add(book);
+                    }
                 }
             }
+        } catch (SQLException e) {
+            throw new BooksDbException("Error searching books by author", e);
         }
+
         return result;
     }
 
@@ -159,7 +210,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     @Override
     public void addBook(Book book) throws BooksDbException {
-        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO Book (isbn, title, published) VALUES (?, ?, ?)")) {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO Book (ISBN, title, publishDate) VALUES (?, ?, ?)")) {
             statement.setString(1, book.getIsbn());
             statement.setString(2, book.getTitle());
             statement.setDate(3, book.getPublished());
@@ -171,7 +222,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     @Override
     public void updateBook(Book book) throws BooksDbException {
-        try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, isbn = ?, published = ? WHERE bookId = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, ISBN = ?, publishDate = ? WHERE bookId = ?")) {
             statement.setString(1, book.getTitle());
             statement.setString(2, book.getIsbn());
             statement.setDate(3, book.getPublished());
@@ -184,7 +235,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     @Override
     public void deleteBook(Book book) throws BooksDbException {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM BOOK WHERE bookId = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book WHERE bookId = ?")) {
             statement.setInt(1, book.getBookId());
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -192,9 +243,8 @@ public class BooksDbMockImpl implements BooksDbInterface {
         }
     }
 
-
     private static final Book[] DATA = {
-            new Book(1, "123456789", "Databases Illuminated", new Date(118, 1, 1)),
+            new Book(1, "123456789", "Databases Illuminated", new Date(2018, 1, 1)),
             new Book(2, "234567891", "Dark Databases", new Date(1990, 1, 1)),
             new Book(3, "456789012", "The buried giant", new Date(2000, 1, 1)),
             new Book(4, "567890123", "Never let me go", new Date(2000, 1, 1)),
