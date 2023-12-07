@@ -99,6 +99,25 @@ public class Controller {
         }
     }
 
+    public void connectToDatabase() {
+        try {
+            if (booksDb.connect("kcdb2")) {
+                booksView.showAlertAndWait("Connected to the database.", INFORMATION);
+            } else {
+                booksView.showAlertAndWait("Failed to connect to the database.", WARNING);
+            }
+        } catch (Exception e) {
+            booksView.showAlertAndWait("Error connecting to the database: " + e.getMessage(), ERROR);
+        }
+    }
+    public void disconnectFromDatabase() {
+        try {
+            booksDb.disconnect();
+            booksView.showAlertAndWait("Disconnected from the database.", INFORMATION);
+        } catch (Exception e) {
+            booksView.showAlertAndWait("Error disconnecting from the database: " + e.getMessage(), ERROR);
+        }
+    }
     // TODO:
     // Add methods for all types of user interaction (e.g. via  menus).
 }

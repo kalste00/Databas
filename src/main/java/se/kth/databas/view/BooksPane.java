@@ -73,7 +73,7 @@ public class BooksPane extends VBox {
         // init views and event handlers
         initBooksTable();
         initSearchView(controller);
-        initMenus();
+        initMenus(controller);
 
         FlowPane bottomPane = new FlowPane();
         bottomPane.setHgap(10);
@@ -131,14 +131,24 @@ public class BooksPane extends VBox {
         });
     }
 
-    private void initMenus() {
+    private void initMenus(Controller controller) {
 
         Menu fileMenu = new Menu("File");
-        MenuItem exitItem = new MenuItem("Exit");
-        MenuItem connectItem = new MenuItem("Connect to Db");
-        MenuItem disconnectItem = new MenuItem("Disconnect");
-        fileMenu.getItems().addAll(exitItem, connectItem, disconnectItem);
 
+        MenuItem exitItem = new MenuItem("Exit");
+        exitItem.setOnAction(event -> {
+            controller.disconnectFromDatabase();
+            System.exit(0);
+        });
+        exitItem.setOnAction(event -> System.exit(0));
+
+        MenuItem connectItem = new MenuItem("Connect to Db");
+        connectItem.setOnAction(event -> controller.connectToDatabase());
+
+        MenuItem disconnectItem = new MenuItem("Disconnect");
+        disconnectItem.setOnAction(event -> controller.disconnectFromDatabase());
+
+        fileMenu.getItems().addAll(exitItem, connectItem, disconnectItem);
         Menu searchMenu = new Menu("Search");
         MenuItem titleItem = new MenuItem("Title");
         MenuItem isbnItem = new MenuItem("ISBN");

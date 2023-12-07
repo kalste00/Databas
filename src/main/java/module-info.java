@@ -5,5 +5,6 @@ module se.kth.databas.databas {
 
 
     opens se.kth.databas to javafx.fxml;
+    opens se.kth.databas.model to javafx.base;
     exports se.kth.databas;
 }

@@ -40,8 +40,6 @@ public class BooksDbMockImpl implements BooksDbInterface {
             throw new BooksDbException("Failed to connect to the database", e);
         }
     }
-
-
     @Override
     public void disconnect() throws BooksDbException {
         try {
@@ -72,12 +70,25 @@ public class BooksDbMockImpl implements BooksDbInterface {
     @Override
     public List<Book> searchBooksByISBN(String searchISBN) throws BooksDbException {
         List<Book> result = new ArrayList<>();
-        searchISBN = searchISBN.toLowerCase();
-        for (Book book : books) {
-            if (book.getIsbn().toLowerCase().contains(searchISBN)) {
-                result.add(book);
+        try {
+            String sql = "SELECT * FROM Book WHERE ISBN LIKE ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, "%" + searchISBN + "%");
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        int bookId = rs.getInt("bookId");
+                        String isbn = rs.getString("ISBN");
+                        String title = rs.getString("title");
+                        Date published = rs.getDate("publishDate");
+                        Book book = new Book(bookId, isbn, title, published);
+                        result.add(book);
+                    }
+                }
             }
+        } catch (SQLException e) {
+            throw new BooksDbException("Error searching books by ISBN", e);
         }
+
         return result;
     }
 
@@ -103,7 +114,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     @Override
     public void addBook(Book book) throws BooksDbException {
-        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO books (isbn, title, published) VALUES (?, ?, ?)")) {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO Book (isbn, title, published) VALUES (?, ?, ?)")) {
             statement.setString(1, book.getIsbn());
             statement.setString(2, book.getTitle());
             statement.setDate(3, book.getPublished());
@@ -115,7 +126,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     @Override
     public void updateBook(Book book) throws BooksDbException {
-        try (PreparedStatement statement = connection.prepareStatement("UPDATE books SET title = ?, isbn = ?, published = ? WHERE bookId = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, isbn = ?, published = ? WHERE bookId = ?")) {
             statement.setString(1, book.getTitle());
             statement.setString(2, book.getIsbn());
             statement.setDate(3, book.getPublished());
@@ -128,7 +139,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     @Override
     public void deleteBook(Book book) throws BooksDbException {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM books WHERE bookId = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM BOOK WHERE bookId = ?")) {
             statement.setInt(1, book.getBookId());
             statement.executeUpdate();
         } catch (SQLException e) {
