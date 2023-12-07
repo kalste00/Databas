@@ -169,8 +169,11 @@ public class BooksPane extends VBox{
         MenuItem titleItem = new MenuItem("Title");
         MenuItem isbnItem = new MenuItem("ISBN");
         MenuItem authorItem = new MenuItem("Author");
-        searchMenu.getItems().addAll(titleItem, isbnItem, authorItem);
-
+        MenuItem allBooks = new MenuItem("AllBooks");
+        allBooks.setOnAction(event -> {
+            controller.onSearchSelected("", SearchMode.AllBooks);
+        });
+        searchMenu.getItems().addAll(titleItem, isbnItem, authorItem, allBooks);
         Menu manageMenu = new Menu("Manage");
         MenuItem addItem = new MenuItem("Add");
         MenuItem removeItem = new MenuItem("Remove");

@@ -27,34 +27,34 @@ public class Controller {
 
     protected void onSearchSelected(String searchFor, SearchMode mode) {
         try {
-            if (searchFor != null && searchFor.length() > 1) {
-                List<Book> result = null;
-                switch (mode) {
-                    case Title:
-                        result = booksDb.searchBooksByTitle(searchFor);
-                        break;
-                    case ISBN:
-                        result = booksDb.searchBooksByISBN(searchFor);
-                        break;
-                    case Author:
-                        result = booksDb.searchBooksByAuthor(searchFor);
-                        break;
-                    default:
-                        result = new ArrayList<>();
-                }
-                if (result == null || result.isEmpty()) {
-                    booksView.showAlertAndWait("No results found.", INFORMATION);
-                } else {
-                    booksView.displayBooks(result);
-                }
+            List<Book> result = null;
+            switch (mode) {
+                case Title:
+                    result = booksDb.searchBooksByTitle(searchFor);
+                    break;
+                case ISBN:
+                    result = booksDb.searchBooksByISBN(searchFor);
+                    break;
+                case Author:
+                    result = booksDb.searchBooksByAuthor(searchFor);
+                    break;
+                case AllBooks:
+                    result = booksDb.getAllBooks();
+                    break;
+                default:
+                    result = new ArrayList<>();
+            }
+            if (result == null || result.isEmpty()) {
+                booksView.showAlertAndWait("No results found.", INFORMATION);
             } else {
-                booksView.showAlertAndWait("Enter a search string!", WARNING);
+                booksView.displayBooks(result);
             }
         } catch (Exception e) {
             e.printStackTrace(); // Add proper logging or print statements for debugging
             booksView.showAlertAndWait("Database error.", ERROR);
         }
     }
+
 
 
     public void deleteItem(Book itemToDelete) {
