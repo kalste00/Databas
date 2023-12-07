@@ -2,6 +2,7 @@ package se.kth.databas.view;
 
 import java.sql.Date;
 import java.util.List;
+import java.util.Optional;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,6 +18,18 @@ import javafx.scene.layout.VBox;
 import se.kth.databas.model.Book;
 import se.kth.databas.model.BooksDbMockImpl;
 import se.kth.databas.model.SearchMode;
+import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.util.Callback;
+
+import static javafx.scene.control.Alert.AlertType.WARNING;
 
 
 /**
@@ -25,7 +38,7 @@ import se.kth.databas.model.SearchMode;
  *
  * @author anderslm@kth.se
  */
-public class BooksPane extends VBox {
+public class BooksPane extends VBox{
 
     private TableView<Book> booksTable;
     private ObservableList<Book> booksInTable; // the data backing the table view
@@ -98,7 +111,10 @@ public class BooksPane extends VBox {
         TableColumn<Book, String> titleCol = new TableColumn<>("Title");
         TableColumn<Book, String> isbnCol = new TableColumn<>("ISBN");
         TableColumn<Book, Date> publishedCol = new TableColumn<>("Published");
-        booksTable.getColumns().addAll(titleCol, isbnCol, publishedCol);
+        TableColumn<Book, String> authorCol = new TableColumn<>("Author/s");
+        TableColumn<Book, String> genreCol = new TableColumn<>("Genre/s");
+        TableColumn<Book, String> ratingCol = new TableColumn<>("Rating");
+        booksTable.getColumns().addAll(titleCol, isbnCol, publishedCol, authorCol, genreCol, ratingCol);
         // give title column some extra space
         titleCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.5));
 
@@ -159,7 +175,16 @@ public class BooksPane extends VBox {
         MenuItem addItem = new MenuItem("Add");
         MenuItem removeItem = new MenuItem("Remove");
         MenuItem updateItem = new MenuItem("Update");
-        manageMenu.getItems().addAll(addItem, removeItem, updateItem);
+        MenuItem rateItem = new MenuItem("Rate");
+        rateItem.setOnAction(event -> {
+            Book selectedBook = booksTable.getSelectionModel().getSelectedItem();
+            if (selectedBook != null) {
+                controller.rateBook(selectedBook);
+            } else {
+                showAlertAndWait("Select a book to rate.", WARNING);
+            }
+        });
+        manageMenu.getItems().addAll(addItem, removeItem, updateItem, rateItem);
 
         menuBar = new MenuBar();
         menuBar.getMenus().addAll(fileMenu, searchMenu, manageMenu);

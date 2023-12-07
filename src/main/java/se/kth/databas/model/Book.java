@@ -15,6 +15,7 @@ public class Book {
     private String isbn; // should check format
     private String title;
     private Date published;
+    private int rating;
     private String storyLine = "";
     private ArrayList<Author> authors = new ArrayList<>();
 
@@ -47,6 +48,15 @@ public class Book {
     public void addAuthor(Author author) {
         authors.add(author);
     }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
+
     @Override
     public String toString() {
         return title + ", " + isbn + ", " + published.toString();

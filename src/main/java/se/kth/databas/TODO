@@ -1,17 +1,16 @@
 
 ÖVERSIKT:
-1. JDBC-driver - Klar?
-2. Anslutningsinformation - Inte klar
+1. JDBC-driver - Klar
+2. Anslutningsinformation - Klar
 3. SQL Uttryck - Inte klar
 4. Transaktionshantering? - Inte klar
 5. Hantering av ResultSet - Inte klar
 6. Exceptions - Inte klar
-7. Stängning av resurser - Inte klar
 
 KOD ATT GÖRA:
 1. Skapa databasen och lägg in data via MySQL-workbench. Skriv sedan kod för
 klient-applikationen som kan söka och presentera data med olika kriterier (titel,
-författarnamn etc.).
+författarnamn etc.). KLART
 2. Lägg till att användaren kan sätta ett betyg på en bok (använd ett dialog-fönster).
 3. Lägg till att användaren kan lägga till nya böcker, först utan sedan med författare. Använd ett
 dialogfönster som ett formulär.

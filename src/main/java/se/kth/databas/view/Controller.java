@@ -118,6 +118,15 @@ public class Controller {
             booksView.showAlertAndWait("Error disconnecting from the database: " + e.getMessage(), ERROR);
         }
     }
+
+    public void rateBook(Book book) {
+        Dialogs.showRatingDialog(book.getTitle(), rating -> {
+            //update book with sql
+            book.setRating(rating);
+            updateItem(book);
+            return null;
+        });
+    }
     // TODO:
     // Add methods for all types of user interaction (e.g. via  menus).
 }
