@@ -55,50 +55,6 @@ public class Controller {
         }
     }
 
-
-
-    public void deleteItem(Book itemToDelete) {
-        try {
-            if (itemToDelete != null) {
-                booksDb.deleteBook(itemToDelete); // Assuming you have a deleteBook method in your BooksDbInterface
-                List<Book> updatedBooks = booksDb.getAllBooks(); // Replace this with the actual method to get all books
-                booksView.displayBooks(updatedBooks); // Refresh the display
-            } else {
-                booksView.showAlertAndWait("Select a book to delete.", WARNING);
-            }
-        } catch (Exception e) {
-            booksView.showAlertAndWait("Error deleting item: " + e.getMessage(), ERROR);
-        }
-    }
-
-    public void addItem(Book newItem) {
-        try {
-            if (newItem != null) {
-                booksDb.addBook(newItem); // Assuming you have an addBook method in your BooksDbInterface
-                List<Book> updatedBooks = booksDb.getAllBooks(); // Replace this with the actual method to get all books
-                booksView.displayBooks(updatedBooks); // Refresh the display
-            } else {
-                booksView.showAlertAndWait("Enter book details to add.", WARNING);
-            }
-        } catch (Exception e) {
-            booksView.showAlertAndWait("Error adding item: " + e.getMessage(), ERROR);
-        }
-    }
-
-    public void updateItem(Book updatedItem) {
-        try {
-            if (updatedItem != null) {
-                booksDb.updateBook(updatedItem); // Assuming you have an updateBook method in your BooksDbInterface
-                List<Book> updatedBooks = booksDb.getAllBooks(); // Replace this with the actual method to get all books
-                booksView.displayBooks(updatedBooks); // Refresh the display
-            } else {
-                booksView.showAlertAndWait("Select a book to update.", WARNING);
-            }
-        } catch (Exception e) {
-            booksView.showAlertAndWait("Error updating item: " + e.getMessage(), ERROR);
-        }
-    }
-
     public void connectToDatabase() {
         try {
             if (booksDb.connect("kcdb2")) {
@@ -121,7 +77,6 @@ public class Controller {
 
     public void rateBook(Book book) {
         Dialogs.showRatingDialog(book.getTitle(), rating -> {
-            //update book with sql
             book.setRating(rating);
             updateItem(book);
             return null;
@@ -139,6 +94,34 @@ public class Controller {
             }
         } catch (Exception e) {
             booksView.showAlertAndWait("Error removing item: " + e.getMessage(), ERROR);
+        }
+    }
+
+    public void addItem(Book newItem) {
+        try {
+            if (newItem != null) {
+                booksDb.addBook(newItem); // Assuming you have an addBook method in your BooksDbInterface
+                List<Book> updatedBooks = booksDb.getAllBooks(); // Replace this with the actual method to get all books
+                booksView.displayBooks(updatedBooks); // Refresh the display
+            } else {
+                booksView.showAlertAndWait("Enter book details to add.", WARNING);
+            }
+        } catch (Exception e) {
+            booksView.showAlertAndWait("Error adding item: " + e.getMessage(), ERROR);
+        }
+    }
+
+    public void updateItem(Book updatedItem) {
+        try {
+            if (updatedItem != null) {
+                booksDb.updateBook(updatedItem);
+                List<Book> updatedBooks = booksDb.getAllBooks();
+                booksView.displayBooks(updatedBooks);
+            } else {
+                booksView.showAlertAndWait("Select a book to update.", WARNING);
+            }
+        } catch (Exception e) {
+            booksView.showAlertAndWait("Error updating item: " + e.getMessage(), ERROR);
         }
     }
     // TODO:

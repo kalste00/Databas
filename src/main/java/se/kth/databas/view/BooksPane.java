@@ -176,6 +176,10 @@ public class BooksPane extends VBox{
         searchMenu.getItems().addAll(titleItem, isbnItem, authorItem, allBooks);
         Menu manageMenu = new Menu("Manage");
         MenuItem addItem = new MenuItem("Add");
+        addItem.setOnAction(event -> {
+            Optional<Book> newBook = Dialogs.showAddDialog();
+            newBook.ifPresent(book -> controller.addItem(book));
+        });
         MenuItem removeItem = new MenuItem("Remove");
         removeItem.setOnAction(event -> {
             Book selectedBook = booksTable.getSelectionModel().getSelectedItem();
@@ -186,6 +190,15 @@ public class BooksPane extends VBox{
             }
         });
         MenuItem updateItem = new MenuItem("Update");
+        updateItem.setOnAction(event -> {
+            Book selectedBook = booksTable.getSelectionModel().getSelectedItem();
+            if (selectedBook != null) {
+                Optional<Book> updatedBook = Dialogs.showUpdateDialog(selectedBook);
+                updatedBook.ifPresent(book -> controller.updateItem(book));
+            } else {
+                showAlertAndWait("Select a book to update.", WARNING);
+            }
+        });
         MenuItem rateItem = new MenuItem("Rate");
         rateItem.setOnAction(event -> {
             Book selectedBook = booksTable.getSelectionModel().getSelectedItem();
