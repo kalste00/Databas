@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 /**
  * A mock implementation of the BooksDBInterface interface to demonstrate how to
@@ -84,7 +85,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
                         int bookId = rs.getInt("bookId");
                         String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
-                        Date published = rs.getDate("published");
+                        LocalDate published = rs.getDate("published").toLocalDate(); // Convert java.sql.Date to LocalDate
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
@@ -102,6 +103,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
         return result;
     }
+
 
     // A method to retrieve authors for a given book
     private List<Author> getAuthorsForBook(int bookId) throws SQLException {
@@ -161,7 +163,10 @@ public class BooksDbMockImpl implements BooksDbInterface {
         try (PreparedStatement statement = connection.prepareStatement("INSERT INTO Book (isbn, title, published) VALUES (?, ?, ?)")) {
             statement.setString(1, book.getIsbn());
             statement.setString(2, book.getTitle());
-            statement.setDate(3, book.getPublished());
+
+            // Convert LocalDate to java.sql.Date
+            statement.setDate(3, Date.valueOf(book.getPublished()));
+
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new BooksDbException("Error adding book: " + e.getMessage(), e);
@@ -173,13 +178,17 @@ public class BooksDbMockImpl implements BooksDbInterface {
         try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, isbn = ?, published = ? WHERE bookId = ?")) {
             statement.setString(1, book.getTitle());
             statement.setString(2, book.getIsbn());
-            statement.setDate(3, book.getPublished());
+
+            // Convert LocalDate to java.sql.Date
+            statement.setDate(3, Date.valueOf(book.getPublished()));
+
             statement.setInt(4, book.getBookId());
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new BooksDbException("Error updating book: " + e.getMessage(), e);
         }
     }
+
 
     @Override
     public void deleteBook(Book book) throws BooksDbException {
@@ -193,14 +202,14 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
 
     private static final Book[] DATA = {
-            new Book(1, "123456789", "Databases Illuminated", new Date(2018, 1, 1),2),
-            new Book(2, "234567891", "Dark Databases", new Date(1990, 1, 1),1),
-            new Book(3, "456789012", "The buried giant", new Date(2000, 1, 1),2),
-            new Book(4, "567890123", "Never let me go", new Date(2000, 1, 1),3),
-            new Book(5, "678901234", "The remains of the day", new Date(2000, 1, 1),2),
-            new Book(6, "234567890", "Alias Grace", new Date(2000, 1, 1),3),
-            new Book(7, "345678911", "The handmaids tale", new Date(2010, 1, 1),3),
-            new Book(8, "345678901", "Shuggie Bain", new Date(2020, 1, 1),2),
-            new Book(9, "345678912", "Microserfs", new Date(2000, 1, 1),4),
+            new Book(1, "123456789", "Databases Illuminated", new Date(2018, 1, 1).toLocalDate(),2),
+            new Book(2, "234567891", "Dark Databases", new Date(1990, 1, 1).toLocalDate(),1),
+            new Book(3, "456789012", "The buried giant", new Date(2000, 1, 1).toLocalDate(),2),
+            new Book(4, "567890123", "Never let me go", new Date(2000, 1, 1).toLocalDate(),3),
+            new Book(5, "678901234", "The remains of the day", new Date(2000, 1, 1).toLocalDate(),2),
+            new Book(6, "234567890", "Alias Grace", new Date(2000, 1, 1).toLocalDate(),3),
+            new Book(7, "345678911", "The handmaids tale", new Date(2010, 1, 1).toLocalDate(),3),
+            new Book(8, "345678901", "Shuggie Bain", new Date(2020, 1, 1).toLocalDate(),2),
+            new Book(9, "345678912", "Microserfs", new Date(2000, 1, 1).toLocalDate(),4),
     };
 }

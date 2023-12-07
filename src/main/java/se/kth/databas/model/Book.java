@@ -3,6 +3,7 @@ package se.kth.databas.model;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
 
 /**
  * Representation of a book.
@@ -14,7 +15,7 @@ public class    Book {
     private int bookId;
     private String isbn; // should check format
     private String title;
-    private Date published;
+    private LocalDate published;
     private int grade;
 
     private String storyLine = "";
@@ -23,7 +24,7 @@ public class    Book {
     // TODO:
     // Add authors, as a separate class(!), and corresponding methods, to your implementation
     // as well, i.e. "private ArrayList<Author> authors;"
-    public Book(int bookId, String isbn, String title, Date published, int grade) {
+    public Book(int bookId, String isbn, String title, LocalDate published, int grade) {
         this.bookId = bookId;
         this.isbn = isbn;
         this.title = title;
@@ -33,11 +34,16 @@ public class    Book {
 
 
     // Additional constructor without the grade field...
-    public Book(String isbn, String title, Date published) {
+    public Book(String isbn, String title, LocalDate published, int grade) {
+        this(-1, isbn, title, published, grade);
+    }
+
+    public Book(String isbn, String title, LocalDate published) {
         this(-1, isbn, title, published, 0); // Default grade is 0
     }
-    public Book(String isbn, String title, Date published, int grade) {
-        this(-1, isbn, title, published, grade);
+
+    public Book(int bookId, String isbn, String title, LocalDate published) {
+        this(bookId, isbn, title, published, 0); // Default grade is 0
     }
     public int getBookId() { return bookId; }
     public String getIsbn() { return isbn; }
@@ -49,7 +55,11 @@ public class    Book {
         this.grade = grade;
     }
     public String getTitle() { return title; }
-    public Date getPublished() { return published; }
+    public LocalDate getPublished() { return published; }
+
+    public void setPublished(LocalDate published) {
+        this.published = published;
+    }
     public String getStoryLine() { return storyLine; }
     
     public void setStoryLine(String storyLine) {
