@@ -127,6 +127,20 @@ public class Controller {
             return null;
         });
     }
+
+    public void deleteBooks(Book bookToDelete) {
+        try {
+            if (bookToDelete != null) {
+                booksDb.deleteBook(bookToDelete);
+                List<Book> updatedBooks = booksDb.getAllBooks();
+                booksView.displayBooks(updatedBooks);
+            } else {
+                booksView.showAlertAndWait("Select a book to remove.", WARNING);
+            }
+        } catch (Exception e) {
+            booksView.showAlertAndWait("Error removing item: " + e.getMessage(), ERROR);
+        }
+    }
     // TODO:
     // Add methods for all types of user interaction (e.g. via  menus).
 }
