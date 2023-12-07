@@ -2,9 +2,8 @@ package se.kth.databas.view;
 
 import java.sql.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -16,10 +15,21 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import se.kth.databas.model.Author;
 import se.kth.databas.model.Book;
 import se.kth.databas.model.BooksDbMockImpl;
 import se.kth.databas.model.SearchMode;
+import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.util.Callback;
+
+import static javafx.scene.control.Alert.AlertType.WARNING;
 
 
 /**
@@ -28,7 +38,7 @@ import se.kth.databas.model.SearchMode;
  *
  * @author anderslm@kth.se
  */
-public class BooksPane extends VBox {
+public class BooksPane extends VBox{
 
     private TableView<Book> booksTable;
     private ObservableList<Book> booksInTable; // the data backing the table view
@@ -59,7 +69,7 @@ public class BooksPane extends VBox {
 
     /**
      * Notify user on input error or exceptions.
-     * 
+     *
      * @param msg the message
      * @param type types: INFORMATION, WARNING et c.
      */
@@ -94,38 +104,29 @@ public class BooksPane extends VBox {
 
     private void initBooksTable() {
         booksTable = new TableView<>();
-        booksTable.setEditable(false);
+        booksTable.setEditable(false); // don't allow user updates (yet)
         booksTable.setPlaceholder(new Label("No rows to display"));
 
-        // Define columns
+        // define columns
         TableColumn<Book, String> titleCol = new TableColumn<>("Title");
         TableColumn<Book, String> isbnCol = new TableColumn<>("ISBN");
-        TableColumn<Book, String> authorsCol = new TableColumn<>("Authors");
-        TableColumn<Book, String> gradeCol = new TableColumn<>("Grade"); // New column for grade
-        TableColumn<Book, Date> publishedCol = new TableColumn<>("Published");
+        TableColumn<Book, Date> publishDateCol = new TableColumn<>("Published");
+        TableColumn<Book, String> authorCol = new TableColumn<>("Author/s");
+        TableColumn<Book, String> genreCol = new TableColumn<>("Genre/s");
+        TableColumn<Book, String> ratingCol = new TableColumn<>("Rating");
+        booksTable.getColumns().addAll(titleCol, isbnCol, publishDateCol, authorCol, genreCol, ratingCol);
+        // give title column some extra space
+        titleCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.5));
 
-        // Add columns to the table
-        booksTable.getColumns().addAll(titleCol, isbnCol, authorsCol, gradeCol, publishedCol);
-
-        // Set column widths
-        titleCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.35));
-        isbnCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.15));
-        authorsCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.35));
-        publishedCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.15));
-
-        // Set cell value factories
+        // define how to fill data for each cell,
+        // get values from Book properties
         titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
         isbnCol.setCellValueFactory(new PropertyValueFactory<>("isbn"));
-        authorsCol.setCellValueFactory(cellData -> {
-            List<Author> authors = cellData.getValue().getAuthors();
-            return new SimpleStringProperty(authors.stream().map(Author::getName).collect(Collectors.joining(", ")));
-        });
-        publishedCol.setCellValueFactory(new PropertyValueFactory<>("published"));
+        publishDateCol.setCellValueFactory(new PropertyValueFactory<>("published"));
 
-        // Set the items in the table
+        // associate the table view with the data
         booksTable.setItems(booksInTable);
     }
-
 
     private void initSearchView(Controller controller) {
         searchField = new TextField();
@@ -174,7 +175,16 @@ public class BooksPane extends VBox {
         MenuItem addItem = new MenuItem("Add");
         MenuItem removeItem = new MenuItem("Remove");
         MenuItem updateItem = new MenuItem("Update");
-        manageMenu.getItems().addAll(addItem, removeItem, updateItem);
+        MenuItem rateItem = new MenuItem("Rate");
+        rateItem.setOnAction(event -> {
+            Book selectedBook = booksTable.getSelectionModel().getSelectedItem();
+            if (selectedBook != null) {
+                controller.rateBook(selectedBook);
+            } else {
+                showAlertAndWait("Select a book to rate.", WARNING);
+            }
+        });
+        manageMenu.getItems().addAll(addItem, removeItem, updateItem, rateItem);
 
         menuBar = new MenuBar();
         menuBar.getMenus().addAll(fileMenu, searchMenu, manageMenu);
