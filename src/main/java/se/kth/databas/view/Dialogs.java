@@ -78,7 +78,10 @@ public class Dialogs {
                     String title = titleField.getText();
                     String isbn = isbnField.getText();
                     LocalDate publishedDate = publishedDateField.getValue();
-                    int rating = Integer.parseInt(ratingField.getText());
+
+                    // If the user doesn't enter a rating, set a default value
+                    int rating = ratingField.getText().isEmpty() ? 0 : Integer.parseInt(ratingField.getText());
+
                     Genre selectedGenre = genreChoiceBox.getValue();
 
                     // Create a Book object using the appropriate constructor

@@ -2,6 +2,7 @@ package se.kth.databas.view;
 
 import se.kth.databas.model.Book;
 import se.kth.databas.model.BooksDbInterface;
+import se.kth.databas.model.Genre;
 import se.kth.databas.model.SearchMode;
 
 import java.util.ArrayList;
@@ -99,10 +100,13 @@ public class Controller {
 
     public void addItem(Book newItem) {
         try {
-            if (newItem != null) {
+            if (newItem != null && newItem.getGenre() != null) {
                 booksDb.addBook(newItem); // Assuming you have an addBook method in your BooksDbInterface
                 List<Book> updatedBooks = booksDb.getAllBooks(); // Replace this with the actual method to get all books
                 booksView.displayBooks(updatedBooks); // Refresh the display
+                if (newItem.getGenre() == null) {
+                    newItem.setGenre(Genre.None);
+                }
             } else {
                 booksView.showAlertAndWait("Enter book details to add.", WARNING);
             }
