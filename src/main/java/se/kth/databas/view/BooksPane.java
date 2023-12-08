@@ -169,10 +169,17 @@ public class BooksPane extends VBox{
         MenuItem titleItem = new MenuItem("Title");
         MenuItem isbnItem = new MenuItem("ISBN");
         MenuItem authorItem = new MenuItem("Author");
-        searchMenu.getItems().addAll(titleItem, isbnItem, authorItem);
-
+        MenuItem allBooks = new MenuItem("AllBooks");
+        allBooks.setOnAction(event -> {
+            controller.onSearchSelected("", SearchMode.AllBooks);
+        });
+        searchMenu.getItems().addAll(titleItem, isbnItem, authorItem, allBooks);
         Menu manageMenu = new Menu("Manage");
         MenuItem addItem = new MenuItem("Add");
+        addItem.setOnAction(event -> {
+            Optional<Book> newBook = Dialogs.showAddDialog();
+            newBook.ifPresent(book -> controller.addItem(book));
+        });
         MenuItem removeItem = new MenuItem("Remove");
         removeItem.setOnAction(event -> {
             Book selectedBook = booksTable.getSelectionModel().getSelectedItem();
@@ -183,6 +190,15 @@ public class BooksPane extends VBox{
             }
         });
         MenuItem updateItem = new MenuItem("Update");
+        updateItem.setOnAction(event -> {
+            Book selectedBook = booksTable.getSelectionModel().getSelectedItem();
+            if (selectedBook != null) {
+                Optional<Book> updatedBook = Dialogs.showUpdateDialog(selectedBook);
+                updatedBook.ifPresent(book -> controller.updateItem(book));
+            } else {
+                showAlertAndWait("Select a book to update.", WARNING);
+            }
+        });
         MenuItem rateItem = new MenuItem("Rate");
         rateItem.setOnAction(event -> {
             Book selectedBook = booksTable.getSelectionModel().getSelectedItem();

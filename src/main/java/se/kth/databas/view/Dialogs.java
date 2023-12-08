@@ -112,7 +112,6 @@ public class Dialogs {
         ChoiceBox<Genre> genreChoiceBox = new ChoiceBox<>();
         genreChoiceBox.getItems().addAll(Genre.values());
         genreChoiceBox.setValue(book.getGenre());
-
         GridPane grid = new GridPane();
         grid.add(new Label("Title:"), 0, 0);
         grid.add(titleField, 1, 0);

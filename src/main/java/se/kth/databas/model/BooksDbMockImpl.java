@@ -148,6 +148,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
         return authors;
     }
 
+    //Needed?
     public List<Author> searchAuthorsByName(String searchName) throws BooksDbException {
         List<Author> result = new ArrayList<>();
         searchName = searchName.toLowerCase();
