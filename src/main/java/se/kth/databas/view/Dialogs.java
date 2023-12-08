@@ -53,6 +53,7 @@ public class Dialogs {
         DatePicker publishedDateField = new DatePicker();
         TextField ratingField = new TextField();
 
+
         // Use ChoiceBox for genre
         ChoiceBox<Genre> genreChoiceBox = new ChoiceBox<>();
         genreChoiceBox.getItems().addAll(Genre.values());

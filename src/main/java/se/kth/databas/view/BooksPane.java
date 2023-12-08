@@ -111,19 +111,22 @@ public class BooksPane extends VBox{
         TableColumn<Book, String> titleCol = new TableColumn<>("Title");
         TableColumn<Book, String> isbnCol = new TableColumn<>("ISBN");
         TableColumn<Book, Date> publishDateCol = new TableColumn<>("Published");
-        TableColumn<Book, String> authorCol = new TableColumn<>("Author/s");
-        TableColumn<Book, String> genreCol = new TableColumn<>("Genre/s");
+        TableColumn<Book, List<String>> authorCol = new TableColumn<>("Author/s");
+        TableColumn<Book, String> genreCol = new TableColumn<>("Genre");
         TableColumn<Book, String> ratingCol = new TableColumn<>("Rating");
         booksTable.getColumns().addAll(titleCol, isbnCol, publishDateCol, authorCol, genreCol, ratingCol);
         // give title column some extra space
-        titleCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.5));
+        titleCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.4));
+        authorCol.prefWidthProperty().bind(booksTable.widthProperty().multiply(0.2));
 
         // define how to fill data for each cell,
         // get values from Book properties
         titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
         isbnCol.setCellValueFactory(new PropertyValueFactory<>("isbn"));
         publishDateCol.setCellValueFactory(new PropertyValueFactory<>("publishDate"));
-
+        authorCol.setCellValueFactory(new PropertyValueFactory<>("authors"));
+        genreCol.setCellValueFactory(new PropertyValueFactory<>("genre"));
+        ratingCol.setCellValueFactory(new PropertyValueFactory<>("rating"));
         // associate the table view with the data
         booksTable.setItems(booksInTable);
     }
@@ -135,7 +138,7 @@ public class BooksPane extends VBox{
         searchModeBox.getItems().addAll(SearchMode.values());
         searchModeBox.setValue(SearchMode.Title);
         searchButton = new Button("Search");
-        
+
         // event handling (dispatch to controller)
         searchButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
