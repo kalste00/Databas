@@ -83,13 +83,4 @@ public class Book {
     public String toString() {
         return title + ", " + isbn + ", " + publishDate.toString() + ", " + authors + ", " + genre + ", " + rating;
     }
-
-    public void setIsbn(String isbn) {
-    }
-
-    public void setPublishDate(Date date) {
-    }
-
-    public void setTitle(String title) {
-    }
 }
