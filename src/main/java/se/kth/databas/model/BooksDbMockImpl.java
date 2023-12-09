@@ -72,8 +72,8 @@ public class BooksDbMockImpl implements BooksDbInterface {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         int bookId = rs.getInt("bookId");
-                        String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
+                        String isbn = rs.getString("ISBN");
                         Date publishDate = rs.getDate("publishDate");
                         Genre genre = Genre.valueOf(rs.getString("genre"));
                         int rating = rs.getInt("rating");
@@ -82,7 +82,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -104,8 +104,8 @@ public class BooksDbMockImpl implements BooksDbInterface {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         int bookId = rs.getInt("bookId");
-                        String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
+                        String isbn = rs.getString("ISBN");
                         Date publishDate = rs.getDate("publishDate");
                         Genre genre = Genre.valueOf(rs.getString("genre"));
                         int rating = rs.getInt("rating");
@@ -113,7 +113,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -188,8 +188,8 @@ public class BooksDbMockImpl implements BooksDbInterface {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         int bookId = rs.getInt("bookId");
-                        String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
+                        String isbn = rs.getString("ISBN");
                         Date publishDate = rs.getDate("publishDate");
                         Genre genre = Genre.valueOf(rs.getString("genre"));
                         int rating = rs.getInt("rating");
@@ -197,7 +197,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
