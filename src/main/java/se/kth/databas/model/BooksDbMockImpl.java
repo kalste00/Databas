@@ -72,17 +72,17 @@ public class BooksDbMockImpl implements BooksDbInterface {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         int bookId = rs.getInt("bookId");
-                        String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
+                        String isbn = rs.getString("ISBN");
                         Date publishDate = rs.getDate("publishDate");
-                        int rating = rs.getInt("rating");
                         Genre genre = Genre.valueOf(rs.getString("genre"));
+                        int rating = rs.getInt("rating");
 
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -104,16 +104,16 @@ public class BooksDbMockImpl implements BooksDbInterface {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         int bookId = rs.getInt("bookId");
-                        String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
+                        String isbn = rs.getString("ISBN");
                         Date publishDate = rs.getDate("publishDate");
-                        int rating = rs.getInt("rating");
                         Genre genre = Genre.valueOf(rs.getString("genre"));
+                        int rating = rs.getInt("rating");
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -188,16 +188,16 @@ public class BooksDbMockImpl implements BooksDbInterface {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         int bookId = rs.getInt("bookId");
-                        String isbn = rs.getString("ISBN");
                         String title = rs.getString("title");
+                        String isbn = rs.getString("ISBN");
                         Date publishDate = rs.getDate("publishDate");
-                        int rating = rs.getInt("rating");
                         Genre genre = Genre.valueOf(rs.getString("genre"));
+                        int rating = rs.getInt("rating");
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -219,11 +219,11 @@ public class BooksDbMockImpl implements BooksDbInterface {
             try (Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
                     int bookId = rs.getInt("bookId");
-                    String isbn = rs.getString("ISBN");
                     String title = rs.getString("title");
+                    String isbn = rs.getString("ISBN");
                     Date publishDate = rs.getDate("publishDate");
-                    int rating = rs.getInt("rating");
                     String genreStr = rs.getString("genre");
+                    int rating = rs.getInt("rating");
 
                     // Fetch authors associated with the book
                     List<Author> bookAuthors = getAuthorsForBook(bookId);
@@ -231,7 +231,7 @@ public class BooksDbMockImpl implements BooksDbInterface {
                     // Convert genre string to Genre enum
                     Genre genre = Genre.valueOf(genreStr);
 
-                    Book book = new Book(bookId, isbn, title, publishDate, genre, rating);
+                    Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                     book.getAuthors().addAll(bookAuthors);
 
                     result.add(book);
@@ -246,10 +246,12 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     @Override
     public void addBook(Book book) throws BooksDbException {
-        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO Book (ISBN, title, publishDate) VALUES (?, ?, ?)")) {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO Book (ISBN, title, publishDate, genre, rating) VALUES (?, ?, ?, ?, ?)")) {
             statement.setString(1, book.getIsbn());
             statement.setString(2, book.getTitle());
             statement.setDate(3, book.getPublishDate());
+            statement.setString(4, book.getGenre().toString());
+            statement.setInt(5, book.getRating());
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new BooksDbException("Error adding book: " + e.getMessage(), e);
@@ -258,11 +260,13 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
     @Override
     public void updateBook(Book book) throws BooksDbException {
-        try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, ISBN = ?, publishDate = ? WHERE bookId = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, ISBN = ?, publishDate = ?, genre = ?, rating = ? WHERE bookId = ?")) {
             statement.setString(1, book.getTitle());
             statement.setString(2, book.getIsbn());
             statement.setDate(3, book.getPublishDate());
-            statement.setInt(4, book.getBookId());
+            statement.setString(4, book.getGenre().toString());
+            statement.setInt(5, book.getRating());
+            statement.setInt(6, book.getBookId());
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new BooksDbException("Error updating book: " + e.getMessage(), e);
