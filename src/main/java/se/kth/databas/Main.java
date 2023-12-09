@@ -14,7 +14,9 @@ import se.kth.databas.view.BooksPane;
  * @author anderslm@kth.se
  */
 public class Main extends Application {
-
+    /**
+     * starts the scene for the program.
+     */
     @Override
     public void start(Stage primaryStage) {
 
@@ -36,6 +38,9 @@ public class Main extends Application {
         primaryStage.show();
     }
 
+    /**
+     * starts the program.
+     */
     public static void main(String[] args) {
         launch(args);
     }
