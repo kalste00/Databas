@@ -47,6 +47,10 @@ public class Book {
         return authors;
     }
 
+    public void setAuthors(List<Author> authors) {
+        this.authors = authors;
+    }
+
     public void addAuthor(Author author) {
         authors.add(author);
     }

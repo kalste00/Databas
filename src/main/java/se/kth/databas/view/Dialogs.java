@@ -3,11 +3,14 @@ package se.kth.databas.view;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.util.Callback;
+import se.kth.databas.model.Author;
 import se.kth.databas.model.Book;
 import se.kth.databas.model.Genre;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class Dialogs {
@@ -52,11 +55,15 @@ public class Dialogs {
         TextField isbnField = new TextField();
         DatePicker publishedDateField = new DatePicker();
         TextField ratingField = new TextField();
-
+        TextField authorsField = new TextField();
 
         // Use ChoiceBox for genre
         ChoiceBox<Genre> genreChoiceBox = new ChoiceBox<>();
         genreChoiceBox.getItems().addAll(Genre.values());
+
+        ListView<String> authorsListView = new ListView<>();
+
+        Button addAuthorButton = new Button("Add Author");
 
         GridPane grid = new GridPane();
         grid.add(new Label("Title:"), 0, 0);
@@ -65,10 +72,25 @@ public class Dialogs {
         grid.add(isbnField, 1, 1);
         grid.add(new Label("Published Date:"), 0, 2);
         grid.add(publishedDateField, 1, 2);
-        grid.add(new Label("Rating:"), 0, 3);
-        grid.add(ratingField, 1, 3);
-        grid.add(new Label("Genre:"), 0, 4);
-        grid.add(genreChoiceBox, 1, 4);
+        grid.add(new Label("Authors:"), 0, 3);
+        grid.add(authorsField, 1, 3);
+        grid.add(new Label("Rating:"), 0, 4);
+        grid.add(ratingField, 1, 4);
+        grid.add(new Label("Genre:"), 0, 5);
+        grid.add(genreChoiceBox, 1, 5);
+        grid.add(addAuthorButton, 2, 5);
+        grid.add(authorsListView, 1, 6);
+
+        List<String> selectedAuthors = new ArrayList<>();
+
+        addAuthorButton.setOnAction(event ->{
+            String authorName = authorsField.getText();
+            if(!authorName.isEmpty()){
+                selectedAuthors.add(authorName);
+                authorsListView.getItems().setAll(selectedAuthors);
+                authorsField.clear();
+            }
+        });
 
         dialog.getDialogPane().setContent(grid);
 
@@ -79,14 +101,13 @@ public class Dialogs {
                     String title = titleField.getText();
                     String isbn = isbnField.getText();
                     LocalDate publishedDate = publishedDateField.getValue();
-
                     // If the user doesn't enter a rating, set a default value
                     int rating = ratingField.getText().isEmpty() ? 0 : Integer.parseInt(ratingField.getText());
-
                     Genre selectedGenre = genreChoiceBox.getValue();
 
-                    // Create a Book object using the appropriate constructor
-                    return new Book(title, isbn, Date.valueOf(publishedDate), selectedGenre, rating);
+                    Book book = new Book(title, isbn, Date.valueOf(publishedDate), selectedGenre, rating);
+                    selectedAuthors.forEach(author -> book.addAuthor(new Author(author)));
+                    return book;
                 } catch (NumberFormatException e) {
                     showAlert("Invalid rating. Please enter a valid integer.", Alert.AlertType.ERROR);
                 }
@@ -111,11 +132,16 @@ public class Dialogs {
         TextField isbnField = new TextField(book.getIsbn());
         DatePicker publishedDateField = new DatePicker(book.getPublishDate().toLocalDate());
         TextField ratingField = new TextField(String.valueOf(book.getRating()));
+        TextField authorsField = new TextField();
 
         // Use ChoiceBox for genre
         ChoiceBox<Genre> genreChoiceBox = new ChoiceBox<>();
         genreChoiceBox.getItems().addAll(Genre.values());
         genreChoiceBox.setValue(book.getGenre());
+        ListView<String> authorsListView = new ListView<>();
+
+        Button addAuthorButton = new Button("Add Author");
+
         GridPane grid = new GridPane();
         grid.add(new Label("Title:"), 0, 0);
         grid.add(titleField, 1, 0);
@@ -123,10 +149,14 @@ public class Dialogs {
         grid.add(isbnField, 1, 1);
         grid.add(new Label("Published Date:"), 0, 2);
         grid.add(publishedDateField, 1, 2);
-        grid.add(new Label("Rating:"), 0, 3);
-        grid.add(ratingField, 1, 3);
-        grid.add(new Label("Genre:"), 0, 4);
-        grid.add(genreChoiceBox, 1, 4);
+        grid.add(new Label("Authors:"), 0, 3);
+        grid.add(authorsField, 1, 3);
+        grid.add(new Label("Rating:"), 0, 4);
+        grid.add(ratingField, 1, 4);
+        grid.add(new Label("Genre:"), 0, 5);
+        grid.add(genreChoiceBox, 1, 5);
+        grid.add(addAuthorButton, 2, 5);
+        grid.add(authorsListView, 1, 6);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -137,7 +167,16 @@ public class Dialogs {
                     String title = titleField.getText();
                     String isbn = isbnField.getText();
                     LocalDate publishedDate = publishedDateField.getValue();
-                    int rating = Integer.parseInt(ratingField.getText());
+
+                    // If the user doesn't enter a rating, set a default value
+                    int rating = ratingField.getText().isEmpty() ? 0 : Integer.parseInt(ratingField.getText());
+
+                    // Validate the rating
+                    if (!isValidRating(String.valueOf(rating))) {
+                        showAlert("Invalid rating. Please enter a valid integer between 1 and 5.", Alert.AlertType.ERROR);
+                        return null;
+                    }
+
                     Genre selectedGenre = genreChoiceBox.getValue();
 
                     // Update the Book object with new values
@@ -157,6 +196,7 @@ public class Dialogs {
 
         return dialog.showAndWait();
     }
+
 
     private static boolean isValidRating(String rating) {
         try {
