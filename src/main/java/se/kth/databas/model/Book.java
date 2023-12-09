@@ -35,11 +35,6 @@ public class Book {
 
     /**
      * extra constructor.
-     * @param title
-     * @param isbn
-     * @param publishDate
-     * @param genre
-     * @param rating
      */
     public Book(String title, String isbn, Date publishDate, Genre genre, int rating) {
         this(-1, title,isbn, publishDate, genre, rating);
@@ -47,13 +42,11 @@ public class Book {
 
     /**
      * returns the bookid
-     * @return
      */
     public int getBookId() { return bookId; }
 
     /**
      * return the isbn
-     * @return
      */
     public String getIsbn() { return isbn; }
     /**
@@ -71,7 +64,7 @@ public class Book {
 
     /**
      * returns the list of authors.
-     * @return
+     * @returns authors
      */
     public List<Author> getAuthors() {
         return authors;
@@ -79,7 +72,6 @@ public class Book {
 
     /**
      * adds authour.
-     * @param author
      */
     public void addAuthor(Author author) {
         authors.add(author);
@@ -104,7 +96,6 @@ public class Book {
 
     /**
      * returns genre.
-     * @return
      */
     public Genre getGenre() {
         return genre;
@@ -124,7 +115,6 @@ public class Book {
 
     /**
      * sets the published date.
-     * @param publishDate
      */
     public void setPublishDate(Date publishDate) {
         this.publishDate = publishDate;
@@ -132,7 +122,6 @@ public class Book {
 
     /**
      * sets the genre.
-     * @param genre
      */
     public void setGenre(Genre genre) {
         this.genre = genre;
@@ -140,7 +129,6 @@ public class Book {
 
     /**
      * returns tostring with the values.
-     * @return
      */
     @Override
     public String toString() {
