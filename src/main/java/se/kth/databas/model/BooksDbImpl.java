@@ -249,7 +249,6 @@ public class BooksDbImpl implements BooksDbInterface {
             } else {
                 authorId = addAuthorAndGetId(author);
             }
-
             try (PreparedStatement innerStatement = connection.prepareStatement("INSERT INTO Book_Author (bookId, authorId) VALUES (?, ?)")) {
                 innerStatement.setInt(1, bookId);
                 innerStatement.setInt(2, authorId);
@@ -349,6 +348,8 @@ public class BooksDbImpl implements BooksDbInterface {
 
             deleteBookFromDatabase(deletedBookId);
 
+            clearOrphanAuthors();
+
             updateBookIdsAfterDelete(deletedBookId);
 
             resetBookIdSequence();
@@ -364,6 +365,12 @@ public class BooksDbImpl implements BooksDbInterface {
         }
     }
 
+    public void clearOrphanAuthors() throws SQLException {
+        String sql = "DELETE FROM Author WHERE authorId NOT IN (SELECT DISTINCT authorId FROM Book_Author)";
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(sql);
+        }
+    }
     private List<Integer> getAuthorIdsForBook(int bookId) throws SQLException {
         List<Integer> authorIds = new ArrayList<>();
 
@@ -382,9 +389,8 @@ public class BooksDbImpl implements BooksDbInterface {
     }
 
     private void resetAuthorIdSequence() throws SQLException {
-        int maxAuthorId = getMaxAuthorIdConnectedToBooks();
+        int maxAuthorId = getMaxAuthorIdInAuthorsTable();
         String sql = "ALTER TABLE Author AUTO_INCREMENT = ?";
-
         try (PreparedStatement resetSequence = connection.prepareStatement(sql)) {
             resetSequence.setInt(1, maxAuthorId);
             resetSequence.executeUpdate();
@@ -392,8 +398,8 @@ public class BooksDbImpl implements BooksDbInterface {
     }
 
     // Add this method to get the maximum author ID associated with any author connected to a book
-    private int getMaxAuthorIdConnectedToBooks() throws SQLException {
-        String sql = "SELECT MAX(a.authorId) FROM Author a JOIN Book_Author ba ON a.authorId = ba.authorId";
+    private int getMaxAuthorIdInAuthorsTable() throws SQLException {
+        String sql = "SELECT MAX(authorId) FROM Author";
         try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
             if (resultSet.next()) {
                 return resultSet.getInt(1) + 1;
