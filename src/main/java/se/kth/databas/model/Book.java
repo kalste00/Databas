@@ -20,10 +20,6 @@ public class Book {
     private String storyLine = "";
     private List<Author> authors = new ArrayList<>();
 
-    /**
-     * Constructs a new Book instance with the specified attributes.
-     *
-     */
     public Book(int bookId, String title, String isbn, Date publishDate, Genre genre, int rating) {
         this.bookId = bookId;
         this.title = title;
@@ -33,27 +29,12 @@ public class Book {
         this.rating = rating;
     }
 
-    /**
-     * extra constructor.
-     */
     public Book(String title, String isbn, Date publishDate, Genre genre, int rating) {
         this(-1, title,isbn, publishDate, genre, rating);
     }
 
-    /**
-     * returns the bookid
-     */
     public int getBookId() { return bookId; }
-
-    /**
-     * return the isbn
-     */
     public String getIsbn() { return isbn; }
-    /**
-     * Gets the title of the book.
-     *
-     * @return The title of the book.
-     */
     public String getTitle() { return title; }
     public Date getPublishDate() { return publishDate; }
     public String getStoryLine() { return storyLine; }
@@ -62,41 +43,26 @@ public class Book {
         this.storyLine = storyLine;
     }
 
-    /**
-     * returns the list of authors.
-     * @returns authors
-     */
     public List<Author> getAuthors() {
         return authors;
     }
 
-    /**
-     * adds authour.
-     */
+    public void setAuthors(List<Author> authors) {
+        this.authors = authors;
+    }
+
     public void addAuthor(Author author) {
         authors.add(author);
     }
 
-    /**
-     * Gets the rating of the book.
-     *
-     * @return The rating of the book.
-     */
     public int getRating() {
         return rating;
     }
-    /**
-     * Sets the rating of the book.
-     *
-     * @param rating The rating to set.
-     */
+
     public void setRating(int rating) {
         this.rating = rating;
     }
 
-    /**
-     * returns genre.
-     */
     public Genre getGenre() {
         return genre;
     }
@@ -104,32 +70,19 @@ public class Book {
     public void setIsbn(String isbn) {
         this.isbn = isbn;
     }
-    /**
-     * Sets the title of the book.
-     *
-     * @param title The title to set.
-     */
+
     public void setTitle(String title) {
         this.title = title;
     }
 
-    /**
-     * sets the published date.
-     */
     public void setPublishDate(Date publishDate) {
         this.publishDate = publishDate;
     }
 
-    /**
-     * sets the genre.
-     */
     public void setGenre(Genre genre) {
         this.genre = genre;
     }
 
-    /**
-     * returns tostring with the values.
-     */
     @Override
     public String toString() {
         return title + ", " + isbn + ", " + publishDate.toString() + ", " + authors + ", " + genre + ", " + rating;
