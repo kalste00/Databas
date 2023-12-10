@@ -1,6 +1,7 @@
 package se.kth.databas.view;
 
 import javafx.scene.control.*;
+import javafx.scene.control.cell.TextFieldListCell;
 import javafx.scene.layout.GridPane;
 import javafx.util.Callback;
 import se.kth.databas.model.Author;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class Dialogs {
 
@@ -106,7 +108,7 @@ public class Dialogs {
                     Genre selectedGenre = genreChoiceBox.getValue();
 
                     Book book = new Book(title, isbn, Date.valueOf(publishedDate), selectedGenre, rating);
-                    selectedAuthors.forEach(author -> book.addAuthor(new Author(author)));
+                    selectedAuthors.forEach(author -> book.addAuthor(new Author(author))); // SIMPLIFY
                     return book;
                 } catch (NumberFormatException e) {
                     showAlert("Invalid rating. Please enter a valid integer.", Alert.AlertType.ERROR);
@@ -138,8 +140,8 @@ public class Dialogs {
         ChoiceBox<Genre> genreChoiceBox = new ChoiceBox<>();
         genreChoiceBox.getItems().addAll(Genre.values());
         genreChoiceBox.setValue(book.getGenre());
-        ListView<String> authorsListView = new ListView<>();
 
+        TextArea authorsTextArea = new TextArea();
         Button addAuthorButton = new Button("Add Author");
 
         GridPane grid = new GridPane();
@@ -156,7 +158,27 @@ public class Dialogs {
         grid.add(new Label("Genre:"), 0, 5);
         grid.add(genreChoiceBox, 1, 5);
         grid.add(addAuthorButton, 2, 5);
-        grid.add(authorsListView, 1, 6);
+        grid.add(authorsTextArea, 1, 6);
+
+        List<String> selectedAuthors = new ArrayList<>();
+        List<Author> authors = book.getAuthors();
+
+        StringBuilder authorsText = new StringBuilder();
+        for (Author author : authors) {
+            selectedAuthors.add(author.getName());
+            authorsText.append(author.getName()).append("\n");
+        }
+        authorsTextArea.setText(authorsText.toString());
+
+        addAuthorButton.setOnAction(event -> {
+            String authorName = authorsField.getText();
+            if (!authorName.isEmpty()) {
+                selectedAuthors.add(authorName);
+                authorsText.append(authorName).append("\n");
+                authorsTextArea.setText(authorsText.toString());
+                authorsField.clear();
+            }
+        });
 
         dialog.getDialogPane().setContent(grid);
 
@@ -167,26 +189,13 @@ public class Dialogs {
                     String title = titleField.getText();
                     String isbn = isbnField.getText();
                     LocalDate publishedDate = publishedDateField.getValue();
-
                     // If the user doesn't enter a rating, set a default value
                     int rating = ratingField.getText().isEmpty() ? 0 : Integer.parseInt(ratingField.getText());
-
-                    // Validate the rating
-                    if (!isValidRating(String.valueOf(rating))) {
-                        showAlert("Invalid rating. Please enter a valid integer between 1 and 5.", Alert.AlertType.ERROR);
-                        return null;
-                    }
-
                     Genre selectedGenre = genreChoiceBox.getValue();
 
-                    // Update the Book object with new values
-                    book.setTitle(title);
-                    book.setIsbn(isbn);
-                    book.setPublishDate(Date.valueOf(publishedDate));
-                    book.setRating(rating);
-                    book.setGenre(selectedGenre);
-
-                    return book;
+                    Book updatedBook = new Book(title, isbn, Date.valueOf(publishedDate), selectedGenre, rating);
+                    selectedAuthors.forEach(author -> updatedBook.addAuthor(new Author(author)));
+                    return updatedBook;
                 } catch (NumberFormatException e) {
                     showAlert("Invalid rating. Please enter a valid integer.", Alert.AlertType.ERROR);
                 }

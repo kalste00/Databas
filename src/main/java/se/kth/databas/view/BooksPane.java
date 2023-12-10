@@ -16,18 +16,13 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import se.kth.databas.model.Book;
-import se.kth.databas.model.BooksDbMockImpl;
+import se.kth.databas.model.BooksDbImpl;
 import se.kth.databas.model.SearchMode;
-import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.util.Callback;
 
 import static javafx.scene.control.Alert.AlertType.WARNING;
 
@@ -49,7 +44,7 @@ public class BooksPane extends VBox{
 
     private MenuBar menuBar;
 
-    public BooksPane(BooksDbMockImpl booksDb) {
+    public BooksPane(BooksDbImpl booksDb) {
         final Controller controller = new Controller(booksDb, this);
         this.init(controller);
     }
