@@ -22,12 +22,7 @@ import java.util.List;
  */
 public class BooksDbImpl implements BooksDbInterface {
 
-    private final List<Book> books;
     private Connection connection;
-
-    public BooksDbImpl() {
-        books = Arrays.asList(DATA);
-    }
 
     @Override
     public boolean connect(String database) throws BooksDbException {
@@ -145,7 +140,7 @@ public class BooksDbImpl implements BooksDbInterface {
 
         try {
             String sql = "SELECT b.* FROM Book b JOIN Book_Author ba ON b.bookId = ba.bookId "
-                    + "JOIN Author a ON a.authorId = ba.authorId WHERE a.name LIKE ?";
+                    + "JOIN Author a ON a.authorId = ba.authorId WHERE a.authorName LIKE ?";
             try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
                 pstmt.setString(1, "%" + searchAuthor + "%");
 
@@ -304,24 +299,38 @@ public class BooksDbImpl implements BooksDbInterface {
             }
         }
     }
-
+/*
+//UPDATE SOL1
     @Override
     public void updateBook(Book book) throws BooksDbException {
         try {
             connection.setAutoCommit(false);
 
-            try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, ISBN = ?, publishDate = ?, genre = ?, rating = ? WHERE bookId = ?")) {
-                statement.setString(1, book.getTitle());
-                statement.setString(2, book.getIsbn());
-                statement.setDate(3, book.getPublishDate());
-                statement.setString(4, book.getGenre().toString());
-                statement.setInt(5, book.getRating());
-                statement.setInt(6, book.getBookId());
-                statement.executeUpdate();
+            if (book.getTitle() != null && !book.getTitle().isEmpty()) {
+                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET title = ? WHERE bookId = ?")) {
+                    stmt.setString(1, book.getTitle());
+                    stmt.setInt(2, book.getBookId());
+                    stmt.executeUpdate();
+                }
             }
 
-            clearBookAuthorConnections(book.getBookId());
-            addAuthorsAndConnections(book.getBookId(), book.getAuthors());
+            if (book.getIsbn() != null && !book.getIsbn().isEmpty()) {
+                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET ISBN = ? WHERE bookId = ?")) {
+                    stmt.setString(1, book.getIsbn());
+                    stmt.setInt(2, book.getBookId());
+                    stmt.executeUpdate();
+                }
+            }
+
+            if (book.getPublishDate() != null) {
+                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET publishDate = ? WHERE bookId = ?")) {
+                    stmt.setDate(1, Date.valueOf(String.valueOf(book.getPublishDate())));
+                    stmt.setInt(2, book.getBookId());
+                    stmt.executeUpdate();
+                }
+            }
+
+            // Uppdatera andra fält på liknande sätt
 
             connection.commit();
         } catch (SQLException e) {
@@ -337,6 +346,199 @@ public class BooksDbImpl implements BooksDbInterface {
             } catch (SQLException e) {
                 throw new BooksDbException("Error setting auto-commit to true", e);
             }
+        }
+    }*/
+/*
+
+    public Book getBookById(int bookId) throws BooksDbException {
+        try {
+            String sql = "SELECT * FROM Book WHERE bookId = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setInt(1, bookId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        String title = rs.getString("title");
+                        String isbn = rs.getString("isbn");
+                        Date publishDate = rs.getDate("publishDate");
+                        Genre genre = Genre.valueOf(rs.getString("genre"));
+                        int rating = rs.getInt("rating");
+
+                        // Fetch authors associated with the book
+                        List<Author> bookAuthors = getAuthorsForBook(bookId);
+
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
+                        book.getAuthors().addAll(bookAuthors);
+
+                        return book;
+                    } else {
+                        // If the book ID is not found, return null instead of throwing an exception
+                        return null;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new BooksDbException("Error getting book by ID: " + e.getMessage(), e);
+        }
+    }
+    @Override
+    //UPDATE SOL2
+    public void updateBook(Book book) throws BooksDbException {
+        try {
+            // Check if the book has a valid ID
+            if (book.getBookId() <= 0) {
+                throw new BooksDbException("Invalid book ID: " + book.getBookId());
+            }
+
+            connection.setAutoCommit(false);
+
+            // Retrieve the existing book from the database
+            Book existingBook = getBookById(book.getBookId());
+            if (existingBook == null) {
+                throw new BooksDbException("Book not found with ID: " + book.getBookId());
+            }
+
+            try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, ISBN = ?, publishDate = ?, genre = ?, rating = ? WHERE bookId = ?")) {
+                statement.setString(1, book.getTitle());
+                statement.setString(2, book.getIsbn());
+                statement.setDate(3, book.getPublishDate());
+                statement.setString(4, book.getGenre().toString());
+                statement.setInt(5, book.getRating());
+                statement.setInt(6, book.getBookId());
+                statement.executeUpdate();
+            }
+
+            // Clear existing author connections and add new ones
+            clearBookAuthorConnections(book.getBookId());
+            addAuthorsAndConnections(book.getBookId(), book.getAuthors());
+
+            // Commit the changes within the same try block
+            connection.commit();
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackException) {
+                throw new BooksDbException("Error rolling back transaction", rollbackException);
+            }
+            throw new BooksDbException("Error updating book: " + e.getMessage(), e);
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new BooksDbException("Error setting auto-commit to true", e);
+            }
+        }
+    }
+
+ */
+
+    //UPDATE SOL3
+    @Override
+    public void updateBook(Book book) throws BooksDbException {
+        try {
+            connection.setAutoCommit(false);
+
+            // Hämta befintliga författare innan ändringar
+            List<Author> existingAuthors = getAuthorsForBook(book.getBookId());
+
+            // Hämta uppdaterade författare
+            List<Author> updatedAuthors = getAuthorsForBook(book.getBookId());
+
+            // Hitta nya författare (de som finns i updatedAuthors men inte i existingAuthors)
+            List<Author> newAuthors = new ArrayList<>();
+            for (Author updatedAuthor : updatedAuthors) {
+                if (!existingAuthors.contains(updatedAuthor)) {
+                    newAuthors.add(updatedAuthor);
+                }
+            }
+
+            // Hitta borttagna författare (de som finns i existingAuthors men inte i updatedAuthors)
+            List<Author> removedAuthors = new ArrayList<>();
+            for (Author existingAuthor : existingAuthors) {
+                if (!updatedAuthors.contains(existingAuthor)) {
+                    removedAuthors.add(existingAuthor);
+                }
+            }
+            // Ta bort borttagna författare
+            for (Author removedAuthor : removedAuthors) {
+                deleteAuthorIfNeeded(removedAuthor);
+            }
+
+            // Lägg till nya författare
+            for (Author newAuthor : newAuthors) {
+                addAuthorIfNeeded(newAuthor);
+                addAuthorsAndConnections(book.getBookId(), newAuthors);
+            }
+
+            // Lägg till/ta bort författare-kopplingar
+            updateBookAuthors(book.getBookId(), updatedAuthors);
+
+            // Uppdatera boken
+            try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, ISBN = ?, publishDate = ?, genre = ?, rating = ? WHERE bookId = ?")) {
+                statement.setString(1, book.getTitle());
+                statement.setString(2, book.getIsbn());
+                statement.setDate(3, book.getPublishDate());
+                statement.setString(4, book.getGenre().toString());
+                statement.setInt(5, book.getRating());
+                statement.setInt(6, book.getBookId());
+                statement.executeUpdate();
+            }
+
+            connection.commit();
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackException) {
+                throw new BooksDbException("Error rolling back transaction", rollbackException);
+            }
+            throw new BooksDbException("Error updating book: " + e.getMessage(), e);
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new BooksDbException("Error setting auto-commit to true", e);
+            }
+        }
+    }
+
+    private void deleteAuthorIfNeeded(Author author) throws SQLException {
+        if (!isAuthorConnectedToOtherBooks(author.getAuthorId())) {
+            deleteAuthorFromDatabase(author.getAuthorId());
+        }
+    }
+
+    private void addAuthorIfNeeded(Author author) throws SQLException {
+        if (!authorExists(author.getName())) {
+            addAuthorAndGetId(author);
+        }
+    }
+
+    private void updateBookAuthors(int bookId, List<Author> updatedAuthors) throws SQLException {
+        List<Author> existingAuthors = getAuthorsForBook(bookId);
+
+        // Hitta nya författare (de som finns i updatedAuthors men inte i existingAuthors)
+        List<Author> newAuthors = new ArrayList<>();
+        for (Author updatedAuthor : updatedAuthors) {
+            if (!existingAuthors.contains(updatedAuthor)) {
+                newAuthors.add(updatedAuthor);
+            }
+        }
+
+        // Hitta borttagna författare (de som finns i existingAuthors men inte i updatedAuthors)
+        List<Author> removedAuthors = new ArrayList<>();
+        for (Author existingAuthor : existingAuthors) {
+            if (!updatedAuthors.contains(existingAuthor)) {
+                removedAuthors.add(existingAuthor);
+            }
+        }
+
+        // Ta bort borttagna författare
+        if (!removedAuthors.isEmpty()) {
+            clearBookAuthorConnections(bookId);
+        }
+
+        // Lägg till nya författare
+        if (!newAuthors.isEmpty()) {
+            addAuthorsAndConnections(bookId, newAuthors);
         }
     }
 
@@ -357,6 +559,7 @@ public class BooksDbImpl implements BooksDbInterface {
             List<Integer> authorIds = getAuthorIdsForBook(deletedBookId);
 
             deleteAuthorsIfNeeded(authorIds);
+
             resetAuthorIdSequence();
 
             connection.commit();
@@ -478,16 +681,4 @@ public class BooksDbImpl implements BooksDbInterface {
         }
         return false;
     }
-
-    private static final Book[] DATA = {
-            new Book(1, "123456789", "Databases Illuminated", new Date(2018, 1, 1),Genre.Literature,5),
-            new Book(2, "234567891", "Dark Databases", new Date(1990, 1, 1),Genre.Literature,5),
-            new Book(3, "456789012", "The buried giant", new Date(2000, 1, 1),Genre.Romance,3),
-            new Book(4, "567890123", "Never let me go", new Date(2000, 1, 1),Genre.ScienceFiction,4),
-            new Book(5, "678901234", "The remains of the day", new Date(2000, 1, 1),Genre.ScienceFiction,3),
-            new Book(6, "234567890", "Alias Grace", new Date(2000, 1, 1),Genre.Action,2),
-            new Book(7, "345678911", "The handmaids tale", new Date(2010, 1, 1),Genre.Adventure,4),
-            new Book(8, "345678901", "Shuggie Bain", new Date(2020, 1, 1),Genre.Fantasy,3),
-            new Book(9, "345678912", "Microserfs", new Date(2000, 1, 1),Genre.Drama,3),
-    };
 }
