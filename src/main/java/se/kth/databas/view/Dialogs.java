@@ -108,7 +108,7 @@ public class Dialogs {
                     Genre selectedGenre = genreChoiceBox.getValue();
 
                     Book book = new Book(title, isbn, Date.valueOf(publishedDate), selectedGenre, rating);
-                    selectedAuthors.forEach(author -> book.addAuthor(new Author(author))); // SIMPLIFY
+                    selectedAuthors.forEach(author -> book.addAuthor(new Author(author)));
                     return book;
                 } catch (NumberFormatException e) {
                     showAlert("Invalid rating. Please enter a valid integer.", Alert.AlertType.ERROR);
