@@ -11,7 +11,6 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * A mock implementation of the BooksDBInterface interface to demonstrate how to
@@ -21,12 +20,12 @@ import java.util.stream.Collectors;
  *
  * @author anderslm@kth.se
  */
-public class BooksDbMockImpl implements BooksDbInterface {
+public class BooksDbImpl implements BooksDbInterface {
 
     private final List<Book> books;
     private Connection connection;
 
-    public BooksDbMockImpl() {
+    public BooksDbImpl() {
         books = Arrays.asList(DATA);
     }
 
@@ -342,7 +341,6 @@ public class BooksDbMockImpl implements BooksDbInterface {
         }
     }
 
-
     public void deleteBook(Book book) throws BooksDbException {
         try {
             int deletedBookId = book.getBookId();
@@ -355,16 +353,32 @@ public class BooksDbMockImpl implements BooksDbInterface {
 
             resetBookIdSequence();
 
-            List<Integer> authorIds = getAuthorsForBook(deletedBookId).stream().map(Author::getAuthorId).collect(Collectors.toList());
+            List<Integer> authorIds = getAuthorIdsForBook(deletedBookId);
 
             deleteAuthorsIfNeeded(authorIds);
-
             resetAuthorIdSequence();
-            resetBookIdSequence();
+
             connection.commit();
         } catch (SQLException e) {
             throw new BooksDbException("Error deleting book: " + e.getMessage(), e);
         }
+    }
+
+    private List<Integer> getAuthorIdsForBook(int bookId) throws SQLException {
+        List<Integer> authorIds = new ArrayList<>();
+
+        try (PreparedStatement statement = connection.prepareStatement("SELECT authorId FROM Book_Author WHERE bookId = ?")) {
+            statement.setInt(1, bookId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    int authorId = resultSet.getInt("authorId");
+                    authorIds.add(authorId);
+                }
+            }
+        }
+
+        return authorIds;
     }
 
     private void resetAuthorIdSequence() throws SQLException {
@@ -380,7 +394,6 @@ public class BooksDbMockImpl implements BooksDbInterface {
     // Add this method to get the maximum author ID associated with any author connected to a book
     private int getMaxAuthorIdConnectedToBooks() throws SQLException {
         String sql = "SELECT MAX(a.authorId) FROM Author a JOIN Book_Author ba ON a.authorId = ba.authorId";
-
         try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
             if (resultSet.next()) {
                 return resultSet.getInt(1) + 1;
@@ -389,12 +402,19 @@ public class BooksDbMockImpl implements BooksDbInterface {
             }
         }
     }
+    private void updateAuthorIdsAfterDelete(int deletedAuthorId) throws SQLException {
+        try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Author SET authorId = authorId - 1 WHERE authorId > ?")) {
+            updateStatement.setInt(1, deletedAuthorId);
+            updateStatement.executeUpdate();
+        }
+    }
 
     private void deleteAuthorsIfNeeded(List<Integer> authorIds) throws SQLException {
         for (Integer authorId : authorIds) {
             if (!isAuthorConnectedToOtherBooks(authorId)) {
                 // Ta bort författaren om den inte är kopplad till andra böcker
                 deleteAuthorFromDatabase(authorId);
+                updateAuthorIdsAfterDelete(authorId);
             } else {
                 System.out.println("Author with ID " + authorId + " is still connected to other books.");
             }
