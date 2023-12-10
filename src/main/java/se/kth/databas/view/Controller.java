@@ -11,7 +11,7 @@ import java.util.List;
 import static javafx.scene.control.Alert.AlertType.*;
 
 /**
- * The controller is responsible for handling user requests and update the view
+ * The controller is responsible for handling user requests and updating the view
  * (and in some cases the model).
  *
  * @author anderslm@kth.se
@@ -28,7 +28,7 @@ public class Controller {
 
     protected void onSearchSelected(String searchFor, SearchMode mode) {
         try {
-            List<Book> result = null;
+            List<Book> result;
             switch (mode) {
                 case Title:
                     result = booksDb.searchBooksByTitle(searchFor);
@@ -67,6 +67,7 @@ public class Controller {
             booksView.showAlertAndWait("Error connecting to the database: " + e.getMessage(), ERROR);
         }
     }
+
     public void disconnectFromDatabase() {
         try {
             booksDb.disconnect();
@@ -129,5 +130,5 @@ public class Controller {
         }
     }
     // TODO:
-    // Add methods for all types of user interaction (e.g. via  menus).
+    // Add methods for all types of user interaction (e.g., via menus).
 }
