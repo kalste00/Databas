@@ -30,10 +30,15 @@ public class Book {
     }
 
     public Book(String title, String isbn, Date publishDate, Genre genre, int rating) {
-        this(-1, title,isbn, publishDate, genre, rating);
+        this(-1, title, isbn, publishDate, genre, rating);
     }
 
     public int getBookId() { return bookId; }
+
+    public void setBookId(int bookId) {
+        this.bookId = bookId;
+    }
+
     public String getIsbn() { return isbn; }
     public String getTitle() { return title; }
     public Date getPublishDate() { return publishDate; }

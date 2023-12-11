@@ -66,8 +66,10 @@ public class BooksDbImpl implements BooksDbInterface {
                         int rating = rs.getInt("rating");
 
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
+                        System.out.println("book ID: " + bookId);
 
-                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
+                        Book book = new Book(title, isbn, publishDate, genre, rating);
+                        book.setBookId(bookId);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -94,11 +96,13 @@ public class BooksDbImpl implements BooksDbInterface {
                         Date publishDate = rs.getDate("publishDate");
                         Genre genre = Genre.valueOf(rs.getString("genre"));
                         int rating = rs.getInt("rating");
+                        System.out.println("book ID: " + bookId);
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
+                        Book book = new Book(title, isbn, publishDate, genre, rating);
+                        book.setBookId(bookId);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -152,11 +156,13 @@ public class BooksDbImpl implements BooksDbInterface {
                         Date publishDate = rs.getDate("publishDate");
                         Genre genre = Genre.valueOf(rs.getString("genre"));
                         int rating = rs.getInt("rating");
+                        System.out.println("book ID: " + bookId);
 
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
+                        Book book = new Book(title, isbn, publishDate, genre, rating);
+                        book.setBookId(bookId);
                         book.getAuthors().addAll(bookAuthors);
 
                         result.add(book);
@@ -183,12 +189,14 @@ public class BooksDbImpl implements BooksDbInterface {
                     Date publishDate = rs.getDate("publishDate");
                     String genreStr = rs.getString("genre");
                     int rating = rs.getInt("rating");
+                    System.out.println("book ID: " + bookId);
 
                     List<Author> bookAuthors = getAuthorsForBook(bookId);
 
                     Genre genre = Genre.valueOf(genreStr);
 
-                    Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
+                    Book book = new Book(title, isbn, publishDate, genre, rating);
+                    book.setBookId(bookId);
                     book.getAuthors().addAll(bookAuthors);
 
                     result.add(book);
@@ -203,9 +211,9 @@ public class BooksDbImpl implements BooksDbInterface {
     @Override
     public void addBook(Book book) throws BooksDbException {
         try {
-            try (PreparedStatement statement = connection.prepareStatement("INSERT INTO Book (ISBN, title, publishDate, genre, rating) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                statement.setString(1, book.getIsbn());
-                statement.setString(2, book.getTitle());
+            try (PreparedStatement statement = connection.prepareStatement("INSERT INTO Book (title, isbn, publishDate, genre, rating) VALUES (?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+                statement.setString(1, book.getTitle());
+                statement.setString(2, book.getIsbn());
                 statement.setDate(3, book.getPublishDate());
                 statement.setString(4, book.getGenre().toString());
                 statement.setInt(5, book.getRating());
@@ -215,6 +223,7 @@ public class BooksDbImpl implements BooksDbInterface {
                     if (generatedKeys.next()) {
                         int bookId = generatedKeys.getInt(1);
                         System.out.println("Generated Book ID: " + bookId);
+                        System.out.println("Generated author ID: " + book.getAuthors());
 
                         clearBookAuthorConnections(bookId);
 
@@ -254,7 +263,6 @@ public class BooksDbImpl implements BooksDbInterface {
         }
     }
 
-
     private void clearBookAuthorConnections(int bookId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book_Author WHERE bookId = ?")) {
             statement.setInt(1, bookId);
@@ -262,6 +270,7 @@ public class BooksDbImpl implements BooksDbInterface {
             System.out.println("Cleared existing author connections for book with ID " + bookId);
         }
     }
+
     private boolean authorExists(String authorName) throws SQLException {
         String sql = "SELECT * FROM Author WHERE authorName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -286,6 +295,7 @@ public class BooksDbImpl implements BooksDbInterface {
         }
     }
 
+
     private int addAuthorAndGetId(Author author) throws SQLException {
         try (PreparedStatement authorStatement = connection.prepareStatement("INSERT INTO Author (authorName) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
             authorStatement.setString(1, author.getName());
@@ -299,249 +309,74 @@ public class BooksDbImpl implements BooksDbInterface {
             }
         }
     }
-/*
-//UPDATE SOL1
-    @Override
-    public void updateBook(Book book) throws BooksDbException {
-        try {
-            connection.setAutoCommit(false);
-
-            if (book.getTitle() != null && !book.getTitle().isEmpty()) {
-                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET title = ? WHERE bookId = ?")) {
-                    stmt.setString(1, book.getTitle());
-                    stmt.setInt(2, book.getBookId());
-                    stmt.executeUpdate();
-                }
-            }
-
-            if (book.getIsbn() != null && !book.getIsbn().isEmpty()) {
-                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET ISBN = ? WHERE bookId = ?")) {
-                    stmt.setString(1, book.getIsbn());
-                    stmt.setInt(2, book.getBookId());
-                    stmt.executeUpdate();
-                }
-            }
-
-            if (book.getPublishDate() != null) {
-                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET publishDate = ? WHERE bookId = ?")) {
-                    stmt.setDate(1, Date.valueOf(String.valueOf(book.getPublishDate())));
-                    stmt.setInt(2, book.getBookId());
-                    stmt.executeUpdate();
-                }
-            }
-
-            // Uppdatera andra fält på liknande sätt
-
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException rollbackException) {
-                throw new BooksDbException("Error rolling back transaction", rollbackException);
-            }
-            throw new BooksDbException("Error updating book: " + e.getMessage(), e);
-        } finally {
-            try {
-                connection.setAutoCommit(true);
-            } catch (SQLException e) {
-                throw new BooksDbException("Error setting auto-commit to true", e);
-            }
-        }
-    }*/
-/*
-
-    public Book getBookById(int bookId) throws BooksDbException {
-        try {
-            String sql = "SELECT * FROM Book WHERE bookId = ?";
-            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-                pstmt.setInt(1, bookId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        String title = rs.getString("title");
-                        String isbn = rs.getString("isbn");
-                        Date publishDate = rs.getDate("publishDate");
-                        Genre genre = Genre.valueOf(rs.getString("genre"));
-                        int rating = rs.getInt("rating");
-
-                        // Fetch authors associated with the book
-                        List<Author> bookAuthors = getAuthorsForBook(bookId);
-
-                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
-                        book.getAuthors().addAll(bookAuthors);
-
-                        return book;
-                    } else {
-                        // If the book ID is not found, return null instead of throwing an exception
-                        return null;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            throw new BooksDbException("Error getting book by ID: " + e.getMessage(), e);
-        }
-    }
-    @Override
-    //UPDATE SOL2
-    public void updateBook(Book book) throws BooksDbException {
-        try {
-            // Check if the book has a valid ID
-            if (book.getBookId() <= 0) {
-                throw new BooksDbException("Invalid book ID: " + book.getBookId());
-            }
-
-            connection.setAutoCommit(false);
-
-            // Retrieve the existing book from the database
-            Book existingBook = getBookById(book.getBookId());
-            if (existingBook == null) {
-                throw new BooksDbException("Book not found with ID: " + book.getBookId());
-            }
-
-            try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, ISBN = ?, publishDate = ?, genre = ?, rating = ? WHERE bookId = ?")) {
-                statement.setString(1, book.getTitle());
-                statement.setString(2, book.getIsbn());
-                statement.setDate(3, book.getPublishDate());
-                statement.setString(4, book.getGenre().toString());
-                statement.setInt(5, book.getRating());
-                statement.setInt(6, book.getBookId());
-                statement.executeUpdate();
-            }
-
-            // Clear existing author connections and add new ones
-            clearBookAuthorConnections(book.getBookId());
-            addAuthorsAndConnections(book.getBookId(), book.getAuthors());
-
-            // Commit the changes within the same try block
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException rollbackException) {
-                throw new BooksDbException("Error rolling back transaction", rollbackException);
-            }
-            throw new BooksDbException("Error updating book: " + e.getMessage(), e);
-        } finally {
-            try {
-                connection.setAutoCommit(true);
-            } catch (SQLException e) {
-                throw new BooksDbException("Error setting auto-commit to true", e);
-            }
-        }
-    }
-
- */
-
-    //UPDATE SOL3
-    @Override
-    public void updateBook(Book book) throws BooksDbException {
-        try {
-            connection.setAutoCommit(false);
-
-            // Hämta befintliga författare innan ändringar
-            List<Author> existingAuthors = getAuthorsForBook(book.getBookId());
-
-            // Hämta uppdaterade författare
-            List<Author> updatedAuthors = getAuthorsForBook(book.getBookId());
-
-            // Hitta nya författare (de som finns i updatedAuthors men inte i existingAuthors)
-            List<Author> newAuthors = new ArrayList<>();
-            for (Author updatedAuthor : updatedAuthors) {
-                if (!existingAuthors.contains(updatedAuthor)) {
-                    newAuthors.add(updatedAuthor);
-                }
-            }
-
-            // Hitta borttagna författare (de som finns i existingAuthors men inte i updatedAuthors)
-            List<Author> removedAuthors = new ArrayList<>();
-            for (Author existingAuthor : existingAuthors) {
-                if (!updatedAuthors.contains(existingAuthor)) {
-                    removedAuthors.add(existingAuthor);
-                }
-            }
-            // Ta bort borttagna författare
-            for (Author removedAuthor : removedAuthors) {
-                deleteAuthorIfNeeded(removedAuthor);
-            }
-
-            // Lägg till nya författare
-            for (Author newAuthor : newAuthors) {
-                addAuthorIfNeeded(newAuthor);
-                addAuthorsAndConnections(book.getBookId(), newAuthors);
-            }
-
-            // Lägg till/ta bort författare-kopplingar
-            updateBookAuthors(book.getBookId(), updatedAuthors);
-
-            // Uppdatera boken
-            try (PreparedStatement statement = connection.prepareStatement("UPDATE Book SET title = ?, ISBN = ?, publishDate = ?, genre = ?, rating = ? WHERE bookId = ?")) {
-                statement.setString(1, book.getTitle());
-                statement.setString(2, book.getIsbn());
-                statement.setDate(3, book.getPublishDate());
-                statement.setString(4, book.getGenre().toString());
-                statement.setInt(5, book.getRating());
-                statement.setInt(6, book.getBookId());
-                statement.executeUpdate();
-            }
-
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException rollbackException) {
-                throw new BooksDbException("Error rolling back transaction", rollbackException);
-            }
-            throw new BooksDbException("Error updating book: " + e.getMessage(), e);
-        } finally {
-            try {
-                connection.setAutoCommit(true);
-            } catch (SQLException e) {
-                throw new BooksDbException("Error setting auto-commit to true", e);
-            }
-        }
-    }
-
-    private void deleteAuthorIfNeeded(Author author) throws SQLException {
-        if (!isAuthorConnectedToOtherBooks(author.getAuthorId())) {
-            deleteAuthorFromDatabase(author.getAuthorId());
-        }
-    }
-
-    private void addAuthorIfNeeded(Author author) throws SQLException {
-        if (!authorExists(author.getName())) {
-            addAuthorAndGetId(author);
-        }
-    }
 
     private void updateBookAuthors(int bookId, List<Author> updatedAuthors) throws SQLException {
         List<Author> existingAuthors = getAuthorsForBook(bookId);
-
-        // Hitta nya författare (de som finns i updatedAuthors men inte i existingAuthors)
         List<Author> newAuthors = new ArrayList<>();
+        List<Author> removedAuthors = new ArrayList<>();
+
+        // Find new authors and removed authors (similar to the previous method)
+
+        // Iterate through authors to find new and removed ones
         for (Author updatedAuthor : updatedAuthors) {
             if (!existingAuthors.contains(updatedAuthor)) {
                 newAuthors.add(updatedAuthor);
             }
         }
 
-        // Hitta borttagna författare (de som finns i existingAuthors men inte i updatedAuthors)
-        List<Author> removedAuthors = new ArrayList<>();
         for (Author existingAuthor : existingAuthors) {
             if (!updatedAuthors.contains(existingAuthor)) {
                 removedAuthors.add(existingAuthor);
             }
         }
-
-        // Ta bort borttagna författare
+        // Step 1: Clear removed authors
         if (!removedAuthors.isEmpty()) {
             clearBookAuthorConnections(bookId);
         }
 
-        // Lägg till nya författare
+        // Step 2: Add new authors
         if (!newAuthors.isEmpty()) {
             addAuthorsAndConnections(bookId, newAuthors);
         }
     }
+    @Override
+    public void updateBook(Book book) throws BooksDbException {
+        try {
+            connection.setAutoCommit(false);
 
+            // Step 1: Get the correct book ID using the old ISBN
+            int correctBookId = searchBooksByISBN(book.getIsbn()).get(0).getBookId();
+
+            // Step 2: Update book information
+            PreparedStatement updateStatement = connection.prepareStatement(
+                    "UPDATE Book SET title = ?, ISBN = ?, publishDate = ?, genre = ?, rating = ? WHERE bookId = ?");
+            updateStatement.setString(1, book.getTitle());
+            updateStatement.setString(2, book.getIsbn());
+            updateStatement.setDate(3, book.getPublishDate());
+            updateStatement.setString(4, book.getGenre().toString());
+            updateStatement.setInt(5, book.getRating());
+            updateStatement.setInt(6, correctBookId);
+            updateStatement.executeUpdate();
+
+            // Step 3: Update book authors
+            updateBookAuthors(correctBookId, book.getAuthors());
+
+            connection.commit();
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackException) {
+                throw new BooksDbException("Error rolling back transaction", rollbackException);
+            }
+            throw new BooksDbException("Error updating book: " + e.getMessage(), e);
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new BooksDbException("Error setting auto-commit to true", e);
+            }
+        }
+    }
     public void deleteBook(Book book) throws BooksDbException {
         try {
             int deletedBookId = book.getBookId();
@@ -621,7 +456,6 @@ public class BooksDbImpl implements BooksDbInterface {
     private void deleteAuthorsIfNeeded(List<Integer> authorIds) throws SQLException {
         for (Integer authorId : authorIds) {
             if (!isAuthorConnectedToOtherBooks(authorId)) {
-                // Ta bort författaren om den inte är kopplad till andra böcker
                 deleteAuthorFromDatabase(authorId);
                 updateAuthorIdsAfterDelete(authorId);
             } else {

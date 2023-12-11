@@ -143,6 +143,7 @@ public class Dialogs {
 
         TextArea authorsTextArea = new TextArea();
         Button addAuthorButton = new Button("Add Author");
+        Button removeAuthorButton = new Button("Remove Author");  // Add a button to remove an author
 
         GridPane grid = new GridPane();
         grid.add(new Label("Title:"), 0, 0);
@@ -158,6 +159,7 @@ public class Dialogs {
         grid.add(new Label("Genre:"), 0, 5);
         grid.add(genreChoiceBox, 1, 5);
         grid.add(addAuthorButton, 2, 5);
+        grid.add(removeAuthorButton, 3, 5);  // Add the button to remove an author
         grid.add(authorsTextArea, 1, 6);
 
         List<String> selectedAuthors = new ArrayList<>();
@@ -177,6 +179,16 @@ public class Dialogs {
                 authorsText.append(authorName).append("\n");
                 authorsTextArea.setText(authorsText.toString());
                 authorsField.clear();
+            }
+        });
+
+        removeAuthorButton.setOnAction(event -> {
+            String selectedAuthor = authorsTextArea.getSelectedText();
+            if (!selectedAuthor.isEmpty()) {
+                selectedAuthors.remove(selectedAuthor.trim());
+                authorsText.setLength(0);
+                selectedAuthors.forEach(author -> authorsText.append(author).append("\n"));
+                authorsTextArea.setText(authorsText.toString());
             }
         });
 
@@ -205,6 +217,7 @@ public class Dialogs {
 
         return dialog.showAndWait();
     }
+
 
 
     private static boolean isValidRating(String rating) {
