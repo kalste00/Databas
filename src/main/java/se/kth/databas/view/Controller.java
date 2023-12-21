@@ -51,7 +51,7 @@ public class Controller {
                 booksView.displayBooks(result);
             }
         } catch (Exception e) {
-            e.printStackTrace(); // Add proper logging or print statements for debugging
+            e.printStackTrace();
             booksView.showAlertAndWait("Database error.", ERROR);
         }
     }
@@ -102,9 +102,9 @@ public class Controller {
     public void addItem(Book newItem) {
         try {
             if (newItem != null && newItem.getGenre() != null) {
-                booksDb.addBook(newItem); // Assuming you have an addBook method in your BooksDbInterface
-                List<Book> updatedBooks = booksDb.getAllBooks(); // Replace this with the actual method to get all books
-                booksView.displayBooks(updatedBooks); // Refresh the display
+                booksDb.addBook(newItem);
+                List<Book> updatedBooks = booksDb.getAllBooks();
+                booksView.displayBooks(updatedBooks);
                 if (newItem.getGenre() == null) {
                     newItem.setGenre(Genre.None);
                 }
@@ -126,6 +126,7 @@ public class Controller {
                 booksView.showAlertAndWait("Select a book to update.", WARNING);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             booksView.showAlertAndWait("Error updating item: " + e.getMessage(), ERROR);
         }
     }
