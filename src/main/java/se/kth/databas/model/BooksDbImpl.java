@@ -68,7 +68,7 @@ public class BooksDbImpl implements BooksDbInterface {
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
                         System.out.println("book ID: " + bookId);
 
-                        Book book = new Book(title, isbn, publishDate, genre, rating);
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                         book.setBookId(bookId);
                         book.getAuthors().addAll(bookAuthors);
 
@@ -101,7 +101,7 @@ public class BooksDbImpl implements BooksDbInterface {
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(title, isbn, publishDate, genre, rating);
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                         book.setBookId(bookId);
                         book.getAuthors().addAll(bookAuthors);
 
@@ -161,7 +161,7 @@ public class BooksDbImpl implements BooksDbInterface {
                         // Fetch authors associated with the book
                         List<Author> bookAuthors = getAuthorsForBook(bookId);
 
-                        Book book = new Book(title, isbn, publishDate, genre, rating);
+                        Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                         book.setBookId(bookId);
                         book.getAuthors().addAll(bookAuthors);
 
@@ -190,12 +190,11 @@ public class BooksDbImpl implements BooksDbInterface {
                     String genreStr = rs.getString("genre");
                     int rating = rs.getInt("rating");
                     System.out.println("book ID: " + bookId);
-
                     List<Author> bookAuthors = getAuthorsForBook(bookId);
 
                     Genre genre = Genre.valueOf(genreStr);
 
-                    Book book = new Book(title, isbn, publishDate, genre, rating);
+                    Book book = new Book(bookId, title, isbn, publishDate, genre, rating);
                     book.setBookId(bookId);
                     book.getAuthors().addAll(bookAuthors);
 
@@ -225,9 +224,11 @@ public class BooksDbImpl implements BooksDbInterface {
                         System.out.println("Generated Book ID: " + bookId);
                         System.out.println("Generated author ID: " + book.getAuthors());
 
+                        book.setBookId(bookId);
+
                         clearBookAuthorConnections(bookId);
 
-                        addAuthorsAndConnections(bookId, book.getAuthors());
+                        addAuthorsAndConnections(book, book.getBookId(), book.getAuthors());
 
                         connection.commit();
                     } else {
@@ -247,30 +248,6 @@ public class BooksDbImpl implements BooksDbInterface {
                 connection.setAutoCommit(true);
             } catch (SQLException e) {
                 throw new BooksDbException("Error setting auto-commit to true", e);
-            }
-        }
-    }
-
-    private void addAuthorsAndConnections(int bookId, List<Author> authors) throws SQLException {
-        for (Author author : authors) {
-            int authorId;
-            try {
-                if (authorExists(author.getName())) {
-                    authorId = getAuthorId(author.getName());
-                } else {
-                    authorId = addAuthorAndGetId(author);
-                }
-
-                try (PreparedStatement innerStatement = connection.prepareStatement("INSERT INTO Book_Author (bookId, authorId) VALUES (?, ?)")) {
-                    innerStatement.setInt(1, bookId);
-                    innerStatement.setInt(2, authorId);
-                    innerStatement.executeUpdate();
-
-                    System.out.println("Added author " + authorId + " for book " + bookId);
-                }
-            } catch (SQLException e) {
-                System.out.println("Error adding author for book " + bookId + ": " + e.getMessage());
-                throw e; // ????
             }
         }
     }
@@ -307,7 +284,6 @@ public class BooksDbImpl implements BooksDbInterface {
         }
     }
 
-
     private int addAuthorAndGetId(Author author) throws SQLException {
         try (PreparedStatement authorStatement = connection.prepareStatement("INSERT INTO Author (authorName) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
             authorStatement.setString(1, author.getName());
@@ -321,9 +297,9 @@ public class BooksDbImpl implements BooksDbInterface {
             }
         }
     }
-
-    private void updateBookAuthors(int bookId, List<Author> updatedAuthors) throws SQLException {
-        List<Author> existingAuthors = getAuthorsForBook(bookId);
+/*
+    private void updateBookAuthors(Book book, List<Author> updatedAuthors) throws SQLException {
+        List<Author> existingAuthors = getAuthorsForBook(book.getBookId());
         List<Author> newAuthors = new ArrayList<>();
         List<Author> removedAuthors = new ArrayList<>();
 
@@ -340,73 +316,150 @@ public class BooksDbImpl implements BooksDbInterface {
         }
 
         if (!removedAuthors.isEmpty()) {
-            clearBookAuthorConnections(bookId);
+            clearBookAuthorConnections(book.getBookId());
         }
 
         if (!newAuthors.isEmpty()) {
-            addAuthorsAndConnections(bookId, newAuthors);
+            addAuthorsAndConnections(book, book.getBookId(), newAuthors);
         }
     }
-
-    public void updateBook(Book book) throws BooksDbException {
+*/
+public void updateBook(Book book) throws BooksDbException {
+    try {
+        connection.setAutoCommit(false);
+        updates(book);
+        //updateBookAuthors(book, book.getAuthors());
+        // Update genre
+        connection.commit();
+    } catch (SQLException e) {
         try {
-            connection.setAutoCommit(false);
-            int currentBookId = getBookIdByISBN(book);
-            String currentISBN = getOriginalISBN(book);
-
-            PreparedStatement updateStatement = connection.prepareStatement(
-                    "UPDATE Book SET title = ?, publishDate = ?, genre = ?, rating = ?, ISBN = ? WHERE bookId = ?");
-            updateStatement.setString(1, book.getTitle());
-            updateStatement.setDate(2, book.getPublishDate());
-            updateStatement.setString(3, book.getGenre().toString());
-            updateStatement.setInt(4, book.getRating());
-            updateStatement.setString(5, currentISBN);
-            updateStatement.setInt(6, currentBookId);
-            updateStatement.executeUpdate();
-
-            updateBookAuthors(currentBookId, book.getAuthors());
-
-            connection.commit();
+            connection.rollback();
+        } catch (SQLException rollbackException) {
+            throw new BooksDbException("Error rolling back transaction", rollbackException);
+        }
+        throw new BooksDbException("Error updating book: " + e.getMessage(), e);
+    } finally {
+        try {
+            connection.setAutoCommit(true);
         } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException rollbackException) {
-                throw new BooksDbException("Error rolling back transaction", rollbackException);
+            throw new BooksDbException("Error setting auto-commit to true", e);
+        }
+    }
+}
+    public void updates(Book book) throws BooksDbException {
+        updateTitle(book);
+        updateIsbn(book);
+        updatePublishDate(book);
+        updateGenre(book);
+        updateRating(book);
+    }
+
+    private void updateTitle(Book book) throws BooksDbException {
+        try {
+            if (book.getTitle() != null && !book.getTitle().isEmpty()) {
+                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET title = ? WHERE bookId = ?")) {
+                    stmt.setString(1, book.getTitle());
+                    stmt.setInt(2, book.getBookId());
+                    stmt.executeUpdate();
+                }
             }
-            System.out.println("BookID: " + book.getBookId());
-            throw new BooksDbException("Error updating book: " + e.getMessage(), e);
-        } finally {
+        } catch (SQLException e) {
+            throw new BooksDbException("Error updating title: " + e.getMessage(), e);
+        }
+    }
+
+    private void updateIsbn(Book book) throws BooksDbException {
+        try {
+            System.out.println("bookId: " + book.getBookId());
+            if (book.getIsbn() != null && !book.getIsbn().isEmpty()) {
+                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET ISBN = ? WHERE bookId = ?")) {
+                    stmt.setString(1, book.getIsbn());
+                    stmt.setInt(2, book.getBookId());
+                    stmt.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            throw new BooksDbException("Error updating ISBN: " + e.getMessage(), e);
+        }
+    }
+
+    private void updatePublishDate(Book book) throws BooksDbException {
+        try {
+            if (book.getPublishDate() != null) {
+                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET publishDate = ? WHERE bookId = ?")) {
+                    stmt.setDate(1, Date.valueOf(String.valueOf(book.getPublishDate())));
+                    stmt.setInt(2, book.getBookId());
+                    stmt.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            throw new BooksDbException("Error updating publish date: " + e.getMessage(), e);
+        }
+    }
+
+    private void updateGenre(Book book) throws BooksDbException {
+        try {
+            if (book.getGenre() != null) {
+                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET genre = ? WHERE bookId = ?")) {
+                    stmt.setString(1, book.getGenre().toString());
+                    stmt.setInt(2, book.getBookId());
+                    stmt.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            throw new BooksDbException("Error updating genre: " + e.getMessage(), e);
+        }
+    }
+
+    private void updateRating(Book book) throws BooksDbException {
+        try {
+            try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET rating = ? WHERE bookId = ?")) {
+                stmt.setInt(1, book.getRating());
+                stmt.setInt(2, book.getBookId());
+                stmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new BooksDbException("Error updating rating: " + e.getMessage(), e);
+        }
+    }
+    private void addAuthorsAndConnections(Book book, int bookId, List<Author> authors) throws SQLException {
+        for (Author author : authors) {
+            int authorId;
             try {
-                connection.setAutoCommit(true);
+                if (authorExists(author.getName())) {
+                    authorId = getAuthorId(author.getName());
+                    bookId = getBookId(book.getTitle());
+                } else {
+                    authorId = addAuthorAndGetId(author);
+                    bookId = getBookId(book.getTitle());
+                }
+                if (!isAuthorConnectedToOtherBooks(authorId)) {
+                    try (PreparedStatement innerStatement = connection.prepareStatement("INSERT INTO Book_Author (bookId, authorId) VALUES (?, ?)")) {
+                        innerStatement.setInt(1, bookId);
+                        innerStatement.setInt(2, authorId);
+                        innerStatement.executeUpdate();
+
+                        System.out.println("Added author " + authorId + " for book " + bookId);
+                    }
+                } else {
+                    System.out.println("Author " + authorId + " is already connected to book " + bookId);
+                }
             } catch (SQLException e) {
-                throw new BooksDbException("Error setting auto-commit to true", e);
+                System.out.println("Error adding author for book " + bookId + ": " + e.getMessage());
+                throw e;
             }
         }
     }
 
-    private int getBookIdByISBN(Book book) throws SQLException {
-        String isbn = getOriginalISBN(book);
-        String sql = "SELECT bookId FROM Book WHERE ISBN = ?";
+    private int getBookId(String bookTitle) throws SQLException {
+        String sql = "SELECT bookId FROM Book WHERE title = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, isbn);
+            pstmt.setString(1, bookTitle);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt("bookId");
                 } else {
-                    throw new SQLException("Book not found with ISBN: " + isbn);
-                }
-            }
-        }
-    }
-    private String getOriginalISBN(Book book) throws SQLException {
-        String sql = "SELECT ISBN FROM Book WHERE bookId = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, book.getBookId());
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("ISBN");
-                } else {
-                    throw new SQLException("Book not found with ID: " + book.getBookId());
+                    throw new SQLException("Book not found with title: " + bookTitle);
                 }
             }
         }
@@ -466,7 +519,6 @@ public class BooksDbImpl implements BooksDbInterface {
                 }
             }
         }
-
         return authorIds;
     }
 

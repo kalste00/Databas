@@ -131,7 +131,7 @@ public class Dialogs {
 
         // Create and configure the title, isbn, publishDate, rating, and genre fields.
         TextField titleField = new TextField(book.getTitle());
-        TextField isbnField = new TextField(book.getIsbn());
+        TextField isbnField = new TextField(book.getIsbn());  // Use the existing ISBN value here
         DatePicker publishedDateField = new DatePicker(book.getPublishDate().toLocalDate());
         TextField ratingField = new TextField(String.valueOf(book.getRating()));
         TextField authorsField = new TextField();
@@ -205,7 +205,10 @@ public class Dialogs {
                     int rating = ratingField.getText().isEmpty() ? 0 : Integer.parseInt(ratingField.getText());
                     Genre selectedGenre = genreChoiceBox.getValue();
 
-                    Book updatedBook = new Book(title, isbn, Date.valueOf(publishedDate), selectedGenre, rating);
+                    // Set the new ISBN value in the existing book before returning it
+                    book.setIsbn(isbn);
+
+                    Book updatedBook = new Book(book.getBookId(), title, isbn, Date.valueOf(publishedDate), selectedGenre, rating);
                     selectedAuthors.forEach(author -> updatedBook.addAuthor(new Author(author)));
                     return updatedBook;
                 } catch (NumberFormatException e) {
