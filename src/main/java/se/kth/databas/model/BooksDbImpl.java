@@ -117,26 +117,6 @@ public class BooksDbImpl implements BooksDbInterface {
     }
 
 
-    // A method to retrieve authors for a given book
-    private List<Author> getAuthorsForBook(int bookId) throws SQLException {
-        String sql = "SELECT a.* FROM Author a JOIN Book_Author ba ON a.authorId = ba.authorId WHERE ba.bookId = ?";
-        List<Author> authors = new ArrayList<>();
-
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, bookId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    int authorId = rs.getInt("authorId");
-                    String authorName = rs.getString("authorName");
-                    Author author = new Author(authorId, authorName);
-                    authors.add(author);
-                }
-            }
-        }
-
-        return authors;
-    }
-
     @Override
     public List<Book> searchBooksByAuthor(String searchAuthor) throws BooksDbException {
         List<Book> result = new ArrayList<>();
@@ -207,6 +187,29 @@ public class BooksDbImpl implements BooksDbInterface {
         return result;
     }
 
+    // A method to retrieve authors for a given book
+    @Override
+    public List<Author> getAuthorsForBook(int bookId) throws BooksDbException {
+        String sql = "SELECT a.* FROM Author a JOIN Book_Author ba ON a.authorId = ba.authorId WHERE ba.bookId = ?";
+        List<Author> authors = new ArrayList<>();
+        try{
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setInt(1, bookId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        int authorId = rs.getInt("authorId");
+                        String authorName = rs.getString("authorName");
+                        Author author = new Author(authorId, authorName);
+                        authors.add(author);
+                    }
+                }
+            }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
+        }
+        return authors;
+    }
+
     @Override
     public void addBook(Book book) throws BooksDbException {
         try {
@@ -251,54 +254,70 @@ public class BooksDbImpl implements BooksDbInterface {
             }
         }
     }
-
-    private void clearBookAuthorConnections(int bookId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book_Author WHERE bookId = ?")) {
-            statement.setInt(1, bookId);
-            statement.executeUpdate();
-            System.out.println("Cleared existing author connections for book with ID " + bookId);
+    @Override
+    public void clearBookAuthorConnections(int bookId) throws BooksDbException {
+        try {
+            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book_Author WHERE bookId = ?")) {
+                statement.setInt(1, bookId);
+                statement.executeUpdate();
+                System.out.println("Cleared existing author connections for book with ID " + bookId);
+            }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
-
-    private boolean authorExists(String authorName) throws SQLException {
+    @Override
+    public boolean authorExists(String authorName) throws BooksDbException {
         String sql = "SELECT * FROM Author WHERE authorName = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, authorName);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
+        try{
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, authorName);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    return rs.next();
+                }
             }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
-
-    private int getAuthorId(String authorName) throws SQLException {
+    @Override
+    public int getAuthorId(String authorName) throws BooksDbException {
         String sql = "SELECT authorId FROM Author WHERE authorName = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, authorName);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("authorId");
-                } else {
-                    throw new SQLException("Author not found with name: " + authorName);
+        try{
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, authorName);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("authorId");
+                    } else {
+                        throw new SQLException("Author not found with name: " + authorName);
+                    }
                 }
             }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
+        }
+    }
+    @Override
+    public int addAuthorAndGetId(Author author) throws BooksDbException {
+        try{
+            try (PreparedStatement authorStatement = connection.prepareStatement("INSERT INTO Author (authorName) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
+                authorStatement.setString(1, author.getName());
+                authorStatement.executeUpdate();
+                try (ResultSet generatedKeys = authorStatement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getInt(1);
+                    } else {
+                        throw new SQLException("Failed to get generated author ID");
+                    }
+                }
+            }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
 
-    private int addAuthorAndGetId(Author author) throws SQLException {
-        try (PreparedStatement authorStatement = connection.prepareStatement("INSERT INTO Author (authorName) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
-            authorStatement.setString(1, author.getName());
-            authorStatement.executeUpdate();
-            try (ResultSet generatedKeys = authorStatement.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    return generatedKeys.getInt(1);
-                } else {
-                    throw new SQLException("Failed to get generated author ID");
-                }
-            }
-        }
-    }
-/*
-    private void updateBookAuthors(Book book, List<Author> updatedAuthors) throws SQLException {
+    private void updateBookAuthors(Book book, List<Author> updatedAuthors) throws BooksDbException {
         List<Author> existingAuthors = getAuthorsForBook(book.getBookId());
         List<Author> newAuthors = new ArrayList<>();
         List<Author> removedAuthors = new ArrayList<>();
@@ -323,13 +342,12 @@ public class BooksDbImpl implements BooksDbInterface {
             addAuthorsAndConnections(book, book.getBookId(), newAuthors);
         }
     }
-*/
+
 public void updateBook(Book book) throws BooksDbException {
     try {
         connection.setAutoCommit(false);
         updates(book);
-        //updateBookAuthors(book, book.getAuthors());
-        // Update genre
+        updateBookAuthors(book, book.getAuthors());
         connection.commit();
     } catch (SQLException e) {
         try {
@@ -422,46 +440,55 @@ public void updateBook(Book book) throws BooksDbException {
             throw new BooksDbException("Error updating rating: " + e.getMessage(), e);
         }
     }
-    private void addAuthorsAndConnections(Book book, int bookId, List<Author> authors) throws SQLException {
-        for (Author author : authors) {
-            int authorId;
-            try {
-                if (authorExists(author.getName())) {
-                    authorId = getAuthorId(author.getName());
-                    bookId = getBookId(book.getTitle());
-                } else {
-                    authorId = addAuthorAndGetId(author);
-                    bookId = getBookId(book.getTitle());
-                }
-                if (!isAuthorConnectedToOtherBooks(authorId)) {
-                    try (PreparedStatement innerStatement = connection.prepareStatement("INSERT INTO Book_Author (bookId, authorId) VALUES (?, ?)")) {
-                        innerStatement.setInt(1, bookId);
-                        innerStatement.setInt(2, authorId);
-                        innerStatement.executeUpdate();
-
-                        System.out.println("Added author " + authorId + " for book " + bookId);
+    @Override
+    public void addAuthorsAndConnections(Book book, int bookId, List<Author> authors) throws BooksDbException {
+        try{
+            for (Author author : authors) {
+                int authorId;
+                try {
+                    if (authorExists(author.getName())) {
+                        authorId = getAuthorId(author.getName());
+                        bookId = getBookId(book.getTitle());
+                    } else {
+                        authorId = addAuthorAndGetId(author);
+                        bookId = getBookId(book.getTitle());
                     }
-                } else {
-                    System.out.println("Author " + authorId + " is already connected to book " + bookId);
+                    if (!isAuthorConnectedToOtherBooks(authorId)) {
+                        try (PreparedStatement innerStatement = connection.prepareStatement("INSERT INTO Book_Author (bookId, authorId) VALUES (?, ?)")) {
+                            innerStatement.setInt(1, bookId);
+                            innerStatement.setInt(2, authorId);
+                            innerStatement.executeUpdate();
+
+                            System.out.println("Added author " + authorId + " for book " + bookId);
+                        }
+                    } else {
+                        System.out.println("Author " + authorId + " is already connected to book " + bookId);
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Error adding author for book " + bookId + ": " + e.getMessage());
+                    throw e;
                 }
-            } catch (SQLException e) {
-                System.out.println("Error adding author for book " + bookId + ": " + e.getMessage());
-                throw e;
             }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
-
-    private int getBookId(String bookTitle) throws SQLException {
-        String sql = "SELECT bookId FROM Book WHERE title = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, bookTitle);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("bookId");
-                } else {
-                    throw new SQLException("Book not found with title: " + bookTitle);
+    @Override
+    public int getBookId(String bookTitle) throws BooksDbException {
+        try{
+            String sql = "SELECT bookId FROM Book WHERE title = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, bookTitle);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("bookId");
+                    } else {
+                        throw new SQLException("Book not found with title: " + bookTitle);
+                    }
                 }
             }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
 
@@ -499,29 +526,37 @@ public void updateBook(Book book) throws BooksDbException {
             }
         }
     }
-
-    public void clearOrphanAuthors() throws SQLException {
-        String sql = "DELETE FROM Author WHERE authorId NOT IN (SELECT DISTINCT authorId FROM Book_Author)";
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(sql);
+    @Override
+    public void clearOrphanAuthors() throws BooksDbException {
+        try{
+            String sql = "DELETE FROM Author WHERE authorId NOT IN (SELECT DISTINCT authorId FROM Book_Author)";
+            try (Statement statement = connection.createStatement()) {
+                statement.executeUpdate(sql);
+            }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
-    private List<Integer> getAuthorIdsForBook(int bookId) throws SQLException {
+    @Override
+    public List<Integer> getAuthorIdsForBook(int bookId) throws BooksDbException {
         List<Integer> authorIds = new ArrayList<>();
+        try{
+            try (PreparedStatement statement = connection.prepareStatement("SELECT authorId FROM Book_Author WHERE bookId = ?")) {
+                statement.setInt(1, bookId);
 
-        try (PreparedStatement statement = connection.prepareStatement("SELECT authorId FROM Book_Author WHERE bookId = ?")) {
-            statement.setInt(1, bookId);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    int authorId = resultSet.getInt("authorId");
-                    authorIds.add(authorId);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        int authorId = resultSet.getInt("authorId");
+                        authorIds.add(authorId);
+                    }
                 }
             }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
         return authorIds;
     }
-
+    /*
     private void resetAuthorIdSequence() throws SQLException {
         int maxAuthorId = getMaxAuthorIdInAuthorsTable();
         String sql = "ALTER TABLE Author AUTO_INCREMENT = ?";
@@ -529,26 +564,35 @@ public void updateBook(Book book) throws BooksDbException {
             resetSequence.setInt(1, maxAuthorId);
             resetSequence.executeUpdate();
         }
-    }
-
-    private int getMaxAuthorIdInAuthorsTable() throws SQLException {
-        String sql = "SELECT MAX(authorId) FROM Author";
-        try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
-            if (resultSet.next()) {
-                return resultSet.getInt(1) + 1;
-            } else {
-                return 1;
+    }*/
+    @Override
+    public int getMaxAuthorIdInAuthorsTable() throws BooksDbException {
+        try{
+            String sql = "SELECT MAX(authorId) FROM Author";
+            try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1) + 1;
+                } else {
+                    return 1;
+                }
             }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
-    private void updateAuthorIdsAfterDelete(int deletedAuthorId) throws SQLException {
-        try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Author SET authorId = authorId - 1 WHERE authorId = ?")) {
-            updateStatement.setInt(1, deletedAuthorId);
-            updateStatement.executeUpdate();
+    @Override
+    public void updateAuthorIdsAfterDelete(int deletedAuthorId) throws BooksDbException {
+        try{
+            try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Author SET authorId = authorId - 1 WHERE authorId = ?")) {
+                updateStatement.setInt(1, deletedAuthorId);
+                updateStatement.executeUpdate();
+            }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
-
-    private void deleteAuthorsIfNeeded(List<Integer> authorIds) throws SQLException {
+    @Override
+    public void deleteAuthorsIfNeeded(List<Integer> authorIds) throws BooksDbException {
         for (Integer authorId : authorIds) {
             if (!isAuthorConnectedToOtherBooks(authorId)) {
                 deleteAuthorFromDatabase(authorId);
@@ -558,55 +602,75 @@ public void updateBook(Book book) throws BooksDbException {
             }
         }
     }
-
-    private void deleteBookFromDatabase(int bookId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book WHERE bookId = ?")) {
-            statement.setInt(1, bookId);
-            statement.executeUpdate();
+    @Override
+    public void deleteBookFromDatabase(int bookId) throws BooksDbException {
+        try{
+            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book WHERE bookId = ?")) {
+                statement.setInt(1, bookId);
+                statement.executeUpdate();
+            }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
-
-    private void updateBookIdsAfterDelete(int deletedBookId) throws SQLException {
-        try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Book SET bookId = bookId - 1 WHERE bookId = ?")) {
-            updateStatement.setInt(1, deletedBookId);
-            updateStatement.executeUpdate();
+    @Override
+    public void updateBookIdsAfterDelete(int deletedBookId) throws BooksDbException {
+        try{
+            try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Book SET bookId = bookId - 1 WHERE bookId = ?")) {
+                updateStatement.setInt(1, deletedBookId);
+                updateStatement.executeUpdate();
+            }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
-
+/*
     private void resetBookIdSequence() throws SQLException {
         try (PreparedStatement resetSequence = connection.prepareStatement("ALTER TABLE Book AUTO_INCREMENT = ?")) {
             resetSequence.setInt(1, getMaxBookId());
             resetSequence.executeUpdate();
         }
-    }
-
-    private void deleteAuthorFromDatabase(int authorId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Author WHERE authorId = ?")) {
-            statement.setInt(1, authorId);
-            statement.executeUpdate();
-        }
-    }
-
-    private int getMaxBookId() throws SQLException {
-        String sql = "SELECT MAX(bookId) FROM Book";
-        try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
-            if (resultSet.next()) {
-                return resultSet.getInt(1) + 1;
-            } else {
-                return 1;
+    }*/
+    @Override
+    public void deleteAuthorFromDatabase(int authorId) throws BooksDbException {
+        try{
+            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Author WHERE authorId = ?")) {
+                statement.setInt(1, authorId);
+                statement.executeUpdate();
             }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
     }
-
-    private boolean isAuthorConnectedToOtherBooks(int authorId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Book_Author WHERE authorId = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, authorId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
+    @Override
+    public int getMaxBookId() throws BooksDbException {
+        try{
+            String sql = "SELECT MAX(bookId) FROM Book";
+            try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1) + 1;
+                } else {
+                    return 1;
                 }
             }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
+        }
+    }
+    @Override
+    public boolean isAuthorConnectedToOtherBooks(int authorId) throws BooksDbException {
+        try{
+            String sql = "SELECT COUNT(*) FROM Book_Author WHERE authorId = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setInt(1, authorId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1) > 0;
+                    }
+                }
+            }
+        }catch (SQLException e) {
+            throw new BooksDbException("Error searching books by Title", e);
         }
         return false;
     }
