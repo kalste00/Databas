@@ -9,9 +9,6 @@ dialogfönster som ett formulär.
 4. Lägg nu till att frågorna till databasen exekveras i en ”bakgrundstråd”
 
 TODO:
- - Author search and add to book
  - class-diagram
- - er-model, relational-model
  - Background-thread of queries
  - Javadoc comments
- - fix the script-file of the tables
