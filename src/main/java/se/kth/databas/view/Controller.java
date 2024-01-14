@@ -136,7 +136,6 @@ public class Controller {
         new Thread(() -> {
             try {
                 updateSemaphore.acquire(); // Acquire the semaphore to ensure synchronization
-
                 if (booksDb.isConnected()) {
                     if (updatedItem != null) {
                         booksDb.updateBook(updatedItem);

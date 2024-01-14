@@ -9,7 +9,6 @@ package se.kth.databas.model;
 import java.sql.*;
 import java.sql.Date;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -112,31 +111,8 @@ public class BooksDbImpl implements BooksDbInterface {
         } catch (SQLException e) {
             throw new BooksDbException("Error searching books by ISBN", e);
         }
-
         return result;
     }
-
-
-    // A method to retrieve authors for a given book
-    private List<Author> getAuthorsForBook(int bookId) throws SQLException {
-        String sql = "SELECT a.* FROM Author a JOIN Book_Author ba ON a.authorId = ba.authorId WHERE ba.bookId = ?";
-        List<Author> authors = new ArrayList<>();
-
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, bookId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    int authorId = rs.getInt("authorId");
-                    String authorName = rs.getString("authorName");
-                    Author author = new Author(authorId, authorName);
-                    authors.add(author);
-                }
-            }
-        }
-
-        return authors;
-    }
-
     @Override
     public List<Book> searchBooksByAuthor(String searchAuthor) throws BooksDbException {
         List<Book> result = new ArrayList<>();
@@ -172,7 +148,6 @@ public class BooksDbImpl implements BooksDbInterface {
         } catch (SQLException e) {
             throw new BooksDbException("Error searching books by author", e);
         }
-
         return result;
     }
 
@@ -205,6 +180,27 @@ public class BooksDbImpl implements BooksDbInterface {
             throw new BooksDbException("Error getting all books", e);
         }
         return result;
+    }
+    @Override
+    public List<Author> getAuthorsForBook(int bookId) throws BooksDbException {
+        String sql = "SELECT a.* FROM Author a JOIN Book_Author ba ON a.authorId = ba.authorId WHERE ba.bookId = ?";
+        List<Author> authors = new ArrayList<>();
+        try{
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setInt(1, bookId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        int authorId = rs.getInt("authorId");
+                        String authorName = rs.getString("authorName");
+                        Author author = new Author(authorId, authorName);
+                        authors.add(author);
+                    }
+                }
+            }
+        }catch (SQLException e){
+            throw new BooksDbException("Error retrieving author for book", e);
+        }
+        return authors;
     }
 
     @Override
@@ -251,26 +247,35 @@ public class BooksDbImpl implements BooksDbInterface {
             }
         }
     }
-
-    private void clearBookAuthorConnections(int bookId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book_Author WHERE bookId = ?")) {
-            statement.setInt(1, bookId);
-            statement.executeUpdate();
-            System.out.println("Cleared existing author connections for book with ID " + bookId);
-        }
-    }
-
-    private boolean authorExists(String authorName) throws SQLException {
-        String sql = "SELECT * FROM Author WHERE authorName = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, authorName);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
+    @Override
+    public void clearBookAuthorConnections(int bookId) throws BooksDbException {
+        try{
+            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book_Author WHERE bookId = ?")) {
+                statement.setInt(1, bookId);
+                statement.executeUpdate();
+                System.out.println("Cleared existing author connections for book with ID " + bookId);
             }
+        }catch (SQLException e){
+            throw new BooksDbException("Error clearing book-author connections", e);
         }
     }
-
-    private int getAuthorId(String authorName) throws SQLException {
+    @Override
+    public boolean authorExists(String authorName) throws BooksDbException {
+        try{
+            String sql = "SELECT * FROM Author WHERE authorName = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, authorName);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    return rs.next();
+                }
+            }
+        }catch (SQLException e){
+            throw new BooksDbException("Error while checking author existence in the database ", e);
+        }
+    }
+    @Override
+    public int getAuthorId(String authorName) throws BooksDbException {
+        try{
         String sql = "SELECT authorId FROM Author WHERE authorName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, authorName);
@@ -282,23 +287,23 @@ public class BooksDbImpl implements BooksDbInterface {
                 }
             }
         }
+    }catch (SQLException e){
+        throw new BooksDbException("Error getting authorId", e);
     }
-
-    private int addAuthorAndGetId(Author author) throws SQLException {
-        try (PreparedStatement authorStatement = connection.prepareStatement("INSERT INTO Author (authorName) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
-            authorStatement.setString(1, author.getName());
-            authorStatement.executeUpdate();
-            try (ResultSet generatedKeys = authorStatement.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    return generatedKeys.getInt(1);
-                } else {
-                    throw new SQLException("Failed to get generated author ID");
-                }
+    }
+    @Override
+    public void addAuthor(Author author) throws BooksDbException {
+        try{
+            try (PreparedStatement authorStatement = connection.prepareStatement("INSERT INTO Author (authorName) VALUES (?)")) {
+                authorStatement.setString(1, author.getName());
+                authorStatement.executeUpdate();
             }
+        }catch (SQLException e){
+            throw new BooksDbException("Error adding author to database", e);
         }
     }
 
-    private void updateBookAuthors(Book book, List<Author> updatedAuthors) throws SQLException {
+    private void updateBookAuthors(Book book, List<Author> updatedAuthors) throws BooksDbException{
         List<Author> existingAuthors = getAuthorsForBook(book.getBookId());
         List<Author> newAuthors = new ArrayList<>();
         List<Author> removedAuthors = new ArrayList<>();
@@ -323,106 +328,43 @@ public class BooksDbImpl implements BooksDbInterface {
             addAuthorsAndConnections(book, book.getBookId(), newAuthors);
         }
     }
+    @Override
+    public void updateBook(Book book) throws BooksDbException {
+        try {
+            connection.setAutoCommit(false);
 
-public void updateBook(Book book) throws BooksDbException {
-    try {
-        connection.setAutoCommit(false);
-        updates(book);
-        updateBookAuthors(book, book.getAuthors());
-        // Update genre
-        connection.commit();
-    } catch (SQLException e) {
-        try {
-            connection.rollback();
-        } catch (SQLException rollbackException) {
-            throw new BooksDbException("Error rolling back transaction", rollbackException);
-        }
-        throw new BooksDbException("Error updating book: " + e.getMessage(), e);
-    } finally {
-        try {
-            connection.setAutoCommit(true);
-        } catch (SQLException e) {
-            throw new BooksDbException("Error setting auto-commit to true", e);
-        }
-    }
-}
-    public void updates(Book book) throws BooksDbException {
-        updateTitle(book);
-        updateIsbn(book);
-        updatePublishDate(book);
-        updateGenre(book);
-        updateRating(book);
-    }
-
-    private void updateTitle(Book book) throws BooksDbException {
-        try {
-            if (book.getTitle() != null && !book.getTitle().isEmpty()) {
-                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET title = ? WHERE bookId = ?")) {
-                    stmt.setString(1, book.getTitle());
-                    stmt.setInt(2, book.getBookId());
-                    stmt.executeUpdate();
-                }
-            }
-        } catch (SQLException e) {
-            throw new BooksDbException("Error updating title: " + e.getMessage(), e);
-        }
-    }
-
-    private void updateIsbn(Book book) throws BooksDbException {
-        try {
-            System.out.println("bookId: " + book.getBookId());
-            if (book.getIsbn() != null && !book.getIsbn().isEmpty()) {
-                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET ISBN = ? WHERE bookId = ?")) {
-                    stmt.setString(1, book.getIsbn());
-                    stmt.setInt(2, book.getBookId());
-                    stmt.executeUpdate();
-                }
-            }
-        } catch (SQLException e) {
-            throw new BooksDbException("Error updating ISBN: " + e.getMessage(), e);
-        }
-    }
-
-    private void updatePublishDate(Book book) throws BooksDbException {
-        try {
-            if (book.getPublishDate() != null) {
-                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET publishDate = ? WHERE bookId = ?")) {
-                    stmt.setDate(1, Date.valueOf(String.valueOf(book.getPublishDate())));
-                    stmt.setInt(2, book.getBookId());
-                    stmt.executeUpdate();
-                }
-            }
-        } catch (SQLException e) {
-            throw new BooksDbException("Error updating publish date: " + e.getMessage(), e);
-        }
-    }
-
-    private void updateGenre(Book book) throws BooksDbException {
-        try {
-            if (book.getGenre() != null) {
-                try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET genre = ? WHERE bookId = ?")) {
-                    stmt.setString(1, book.getGenre().toString());
-                    stmt.setInt(2, book.getBookId());
-                    stmt.executeUpdate();
-                }
-            }
-        } catch (SQLException e) {
-            throw new BooksDbException("Error updating genre: " + e.getMessage(), e);
-        }
-    }
-
-    private void updateRating(Book book) throws BooksDbException {
-        try {
-            try (PreparedStatement stmt = connection.prepareStatement("UPDATE Book SET rating = ? WHERE bookId = ?")) {
-                stmt.setInt(1, book.getRating());
-                stmt.setInt(2, book.getBookId());
+            String updateSql = "UPDATE Book SET title = ?, ISBN = ?, publishDate = ?, genre = ?, rating = ? WHERE bookId = ?";
+            try (PreparedStatement stmt = connection.prepareStatement(updateSql)) {
+                stmt.setString(1, book.getTitle());
+                stmt.setString(2, book.getIsbn());
+                stmt.setDate(3, book.getPublishDate());
+                stmt.setString(4, String.valueOf(book.getGenre()));
+                stmt.setInt(5, book.getRating());
+                stmt.setInt(6, book.getBookId());
                 stmt.executeUpdate();
             }
+
+            updateBookAuthors(book, book.getAuthors());
+
+            connection.commit();
         } catch (SQLException e) {
-            throw new BooksDbException("Error updating rating: " + e.getMessage(), e);
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackException) {
+                throw new BooksDbException("Error rolling back transaction", rollbackException);
+            }
+            throw new BooksDbException("Error updating book: " + e.getMessage(), e);
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new BooksDbException("Error setting auto-commit to true", e);
+            }
         }
     }
-    private void addAuthorsAndConnections(Book book, int bookId, List<Author> authors) throws SQLException {
+
+    @Override
+    public void addAuthorsAndConnections(Book book, int bookId, List<Author> authors) throws BooksDbException {
         for (Author author : authors) {
             int authorId;
             try {
@@ -430,10 +372,11 @@ public void updateBook(Book book) throws BooksDbException {
                     authorId = getAuthorId(author.getName());
                     bookId = getBookId(book.getTitle());
                 } else {
-                    authorId = addAuthorAndGetId(author);
+                    addAuthor(author);
+                    authorId = getAuthorId(author.getName());
                     bookId = getBookId(book.getTitle());
                 }
-                if (!isAuthorConnectedToOtherBooks(authorId)) {
+                if (isAuthorConnectedToOtherBooks(authorId)) {
                     try (PreparedStatement innerStatement = connection.prepareStatement("INSERT INTO Book_Author (bookId, authorId) VALUES (?, ?)")) {
                         innerStatement.setInt(1, bookId);
                         innerStatement.setInt(2, authorId);
@@ -446,25 +389,29 @@ public void updateBook(Book book) throws BooksDbException {
                 }
             } catch (SQLException e) {
                 System.out.println("Error adding author for book " + bookId + ": " + e.getMessage());
-                throw e;
+                throw new BooksDbException("Error adding author connections", e);
             }
         }
     }
-
-    private int getBookId(String bookTitle) throws SQLException {
-        String sql = "SELECT bookId FROM Book WHERE title = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, bookTitle);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("bookId");
-                } else {
-                    throw new SQLException("Book not found with title: " + bookTitle);
+    @Override
+    public int getBookId(String bookTitle) throws BooksDbException {
+        try{
+            String sql = "SELECT bookId FROM Book WHERE title = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, bookTitle);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("bookId");
+                    } else {
+                        throw new BooksDbException("Book not found with title: " + bookTitle);
+                    }
                 }
             }
+        }catch (SQLException e){
+            throw new BooksDbException("Error retrieving bookId", e);
         }
     }
-
+    @Override
     public void deleteBook(Book book) throws BooksDbException {
         try {
             connection.setAutoCommit(false);
@@ -499,70 +446,52 @@ public void updateBook(Book book) throws BooksDbException {
             }
         }
     }
-
     @Override
-    public boolean isConnected() {
-        try {
-            return connection != null && !connection.isClosed();
-        } catch (SQLException e) {
-            // Handle the exception or log it
-            e.printStackTrace();
-            return false;
+    public void clearOrphanAuthors() throws BooksDbException {
+        try{
+            String sql = "DELETE FROM Author WHERE authorId NOT IN (SELECT DISTINCT authorId FROM Book_Author)";
+            try (Statement statement = connection.createStatement()) {
+                statement.executeUpdate(sql);
+            }
+        }catch (SQLException e){
+            throw new BooksDbException("Error while clearing orphan authors from the database", e);
         }
     }
+    @Override
+    public List<Integer> getAuthorIdsForBook(int bookId) throws BooksDbException {
+        try{
+            List<Integer> authorIds = new ArrayList<>();
 
+            try (PreparedStatement statement = connection.prepareStatement("SELECT authorId FROM Book_Author WHERE bookId = ?")) {
+                statement.setInt(1, bookId);
 
-    public void clearOrphanAuthors() throws SQLException {
-        String sql = "DELETE FROM Author WHERE authorId NOT IN (SELECT DISTINCT authorId FROM Book_Author)";
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(sql);
-        }
-    }
-    private List<Integer> getAuthorIdsForBook(int bookId) throws SQLException {
-        List<Integer> authorIds = new ArrayList<>();
-
-        try (PreparedStatement statement = connection.prepareStatement("SELECT authorId FROM Book_Author WHERE bookId = ?")) {
-            statement.setInt(1, bookId);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    int authorId = resultSet.getInt("authorId");
-                    authorIds.add(authorId);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        int authorId = resultSet.getInt("authorId");
+                        authorIds.add(authorId);
+                    }
                 }
             }
-        }
-        return authorIds;
-    }
-
-    private void resetAuthorIdSequence() throws SQLException {
-        int maxAuthorId = getMaxAuthorIdInAuthorsTable();
-        String sql = "ALTER TABLE Author AUTO_INCREMENT = ?";
-        try (PreparedStatement resetSequence = connection.prepareStatement(sql)) {
-            resetSequence.setInt(1, maxAuthorId);
-            resetSequence.executeUpdate();
+            return authorIds;
+        }catch (SQLException e){
+            throw new BooksDbException("Error retrieving authorId for book", e);
         }
     }
-
-    private int getMaxAuthorIdInAuthorsTable() throws SQLException {
-        String sql = "SELECT MAX(authorId) FROM Author";
-        try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
-            if (resultSet.next()) {
-                return resultSet.getInt(1) + 1;
-            } else {
-                return 1;
+    @Override
+    public void updateAuthorIdsAfterDelete(int deletedAuthorId) throws BooksDbException {
+        try{
+            try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Author SET authorId = authorId - 1 WHERE authorId = ?")) {
+                updateStatement.setInt(1, deletedAuthorId);
+                updateStatement.executeUpdate();
             }
-        }
-    }
-    private void updateAuthorIdsAfterDelete(int deletedAuthorId) throws SQLException {
-        try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Author SET authorId = authorId - 1 WHERE authorId = ?")) {
-            updateStatement.setInt(1, deletedAuthorId);
-            updateStatement.executeUpdate();
+        } catch (SQLException e){
+            throw new BooksDbException("Error updating authorId after delete", e);
         }
     }
 
-    private void deleteAuthorsIfNeeded(List<Integer> authorIds) throws SQLException {
+    public void deleteAuthorsIfNeeded(List<Integer> authorIds) throws BooksDbException{
         for (Integer authorId : authorIds) {
-            if (!isAuthorConnectedToOtherBooks(authorId)) {
+            if (isAuthorConnectedToOtherBooks(authorId)) {
                 deleteAuthorFromDatabase(authorId);
                 updateAuthorIdsAfterDelete(authorId);
             } else {
@@ -570,56 +499,63 @@ public void updateBook(Book book) throws BooksDbException {
             }
         }
     }
-
-    private void deleteBookFromDatabase(int bookId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book WHERE bookId = ?")) {
-            statement.setInt(1, bookId);
-            statement.executeUpdate();
-        }
-    }
-
-    private void updateBookIdsAfterDelete(int deletedBookId) throws SQLException {
-        try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Book SET bookId = bookId - 1 WHERE bookId = ?")) {
-            updateStatement.setInt(1, deletedBookId);
-            updateStatement.executeUpdate();
-        }
-    }
-
-    private void resetBookIdSequence() throws SQLException {
-        try (PreparedStatement resetSequence = connection.prepareStatement("ALTER TABLE Book AUTO_INCREMENT = ?")) {
-            resetSequence.setInt(1, getMaxBookId());
-            resetSequence.executeUpdate();
-        }
-    }
-
-    private void deleteAuthorFromDatabase(int authorId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Author WHERE authorId = ?")) {
-            statement.setInt(1, authorId);
-            statement.executeUpdate();
-        }
-    }
-
-    private int getMaxBookId() throws SQLException {
-        String sql = "SELECT MAX(bookId) FROM Book";
-        try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(sql)) {
-            if (resultSet.next()) {
-                return resultSet.getInt(1) + 1;
-            } else {
-                return 1;
+    @Override
+    public void deleteBookFromDatabase(int bookId) throws BooksDbException {
+        try{
+            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Book WHERE bookId = ?")) {
+                statement.setInt(1, bookId);
+                statement.executeUpdate();
             }
+        }catch (SQLException e){
+            throw new BooksDbException("Error deleting book from database", e);
         }
     }
-
-    private boolean isAuthorConnectedToOtherBooks(int authorId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Book_Author WHERE authorId = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, authorId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
+    @Override
+    public void updateBookIdsAfterDelete(int deletedBookId) throws BooksDbException {
+        try{
+            try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Book SET bookId = bookId - 1 WHERE bookId = ?")) {
+                updateStatement.setInt(1, deletedBookId);
+                updateStatement.executeUpdate();
+            }
+        }catch (SQLException e){
+            throw new BooksDbException("Error updating bookId after delete", e);
+        }
+    }
+    @Override
+    public void deleteAuthorFromDatabase(int authorId) throws BooksDbException {
+        try{
+            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM Author WHERE authorId = ?")) {
+                statement.setInt(1, authorId);
+                statement.executeUpdate();
+            }
+        }catch (SQLException e){
+            throw new BooksDbException("Error deleting author from database", e);
+        }
+    }
+    @Override
+    public boolean isAuthorConnectedToOtherBooks(int authorId) throws BooksDbException {
+        try {
+            String sql = "SELECT COUNT(*) FROM Book_Author WHERE authorId = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setInt(1, authorId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1) <= 0;
+                    }
                 }
             }
+        }catch (SQLException e){
+            throw new BooksDbException("Error checking if author is connected to other books.", e);
         }
-        return false;
+        return true;
+    }
+    @Override
+    public boolean isConnected(){
+        try {
+            return connection != null && !connection.isClosed();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
